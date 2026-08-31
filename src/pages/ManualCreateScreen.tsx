@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   IonPage,
@@ -22,6 +22,8 @@ import {
 } from '@ionic/react';
 import { useTranslation } from 'react-i18next';
 import Inbox from '../plugins/Inbox';
+import AnkiDroid, { type AnkiModelInfo } from '../plugins/AnkiDroid';
+import { getSelectedAnkiModel, setSelectedAnkiModel } from '../lib/anki/modelSelection';
 import type { CardType } from '../lib/anki/types';
 
 const ManualCreateScreen: React.FC = () => {
@@ -33,8 +35,44 @@ const ManualCreateScreen: React.FC = () => {
   const [type, setType] = useState<CardType>('basic');
   const [deckName, setDeckName] = useState('MasterAnki');
   const [message, setMessage] = useState('');
+  // 真实 AnkiDroid 模板（可用时优先展示）
+  const [realModels, setRealModels] = useState<AnkiModelInfo[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // 加载 AnkiDroid 真实模板列表 + 已选模型
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const current = await getSelectedAnkiModel();
+      if (!cancelled) setSelectedModelName(current);
+      try {
+        const res = await AnkiDroid.getModels();
+        if (!cancelled && res.models && res.models.length > 0) {
+          setRealModels(res.models);
+        }
+      } catch {
+        // API 不可用 → 保持内置选项
+      } finally {
+        if (!cancelled) setModelsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** 选择真实模板：持久化模型名，并按名称启发式推断卡片类型 */
+  const pickRealModel = async (name: string) => {
+    await setSelectedAnkiModel(name);
+    setSelectedModelName(name);
+    const lower = name.toLowerCase();
+    if (lower.includes('occlu')) setType('image_occlusion');
+    else if (lower.includes('cloze')) setType('cloze');
+    else setType('basic');
+  };
 
   const save = async () => {
     if (!front.trim() || !back.trim()) {
@@ -102,11 +140,28 @@ const ManualCreateScreen: React.FC = () => {
 
         <IonItem>
           <IonLabel position="stacked">{t('create.cardType')}</IonLabel>
-          <IonSelect value={type} onIonChange={(e) => setType(e.detail.value as CardType)}>
-            <IonSelectOption value="basic">{t('create.basic')}</IonSelectOption>
-            <IonSelectOption value="cloze">{t('create.cloze')}</IonSelectOption>
-            <IonSelectOption value="image_occlusion">{t('create.imageOcclusion')}</IonSelectOption>
-          </IonSelect>
+          {realModels.length > 0 ? (
+            <IonSelect
+              value={selectedModelName ?? ''}
+              onIonChange={(e) => void pickRealModel(String(e.detail.value))}
+              placeholder={t('create.chooseTemplate')}
+            >
+              {realModels.map((m) => (
+                <IonSelectOption key={m.id} value={m.name}>
+                  {m.name}
+                </IonSelectOption>
+              ))}
+            </IonSelect>
+          ) : (
+            <IonSelect value={type} onIonChange={(e) => setType(e.detail.value as CardType)}>
+              <IonSelectOption value="basic">{t('create.basic')}</IonSelectOption>
+              <IonSelectOption value="cloze">{t('create.cloze')}</IonSelectOption>
+              <IonSelectOption value="image_occlusion">
+                {t('create.imageOcclusion')}
+              </IonSelectOption>
+            </IonSelect>
+          )}
+          {modelsLoading && <IonNote color="medium">{t('create.loadingModels')}</IonNote>}
         </IonItem>
 
         {type === 'cloze' ? (

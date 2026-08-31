@@ -110,6 +110,8 @@ const en = {
     basic: 'Basic (Q&A)',
     cloze: 'Cloze (Fill-in-the-blank)',
     imageOcclusion: 'Image Occlusion',
+    chooseTemplate: 'Choose an AnkiDroid template',
+    loadingModels: 'Loading AnkiDroid templates…',
     textWithCloze: 'Text with {{code}} *',
     front: 'Front *',
     back: 'Back / Extra *',
@@ -146,6 +148,10 @@ const en = {
     needsIo: 'Needs IO plugin',
     ioNoteAvailable:
       'Image Occlusion requires the AnkiDroid Image Occlusion Enhanced add-on. It is currently disabled because the add-on is not detected.',
+    ankiModels: 'AnkiDroid Templates',
+    ankiModelsNote:
+      'These are the templates actually used in your AnkiDroid. Cards will be written using the one you pick.',
+    noFields: '(no fields)',
     ioNoteMissing:
       'Image Occlusion requires the AnkiDroid Image Occlusion Enhanced add-on. If not installed, it will be disabled.',
   },

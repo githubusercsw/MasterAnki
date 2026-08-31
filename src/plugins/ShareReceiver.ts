@@ -6,6 +6,7 @@
 
 import { registerPlugin } from '@capacitor/core';
 import type { ContentType } from '../lib/anki/types';
+import { webShareReceiver } from './web/shareReceiverWeb';
 
 export interface IncomingShare {
   mode: 'text' | 'url';
@@ -31,6 +32,8 @@ export interface ShareReceiverPlugin {
   shareText(options: { text: string; title?: string }): Promise<void>;
 }
 
-const ShareReceiver = registerPlugin<ShareReceiverPlugin>('ShareReceiver');
+const ShareReceiver = registerPlugin<ShareReceiverPlugin>('ShareReceiver', {
+  web: () => webShareReceiver,
+});
 
 export default ShareReceiver;

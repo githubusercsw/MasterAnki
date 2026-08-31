@@ -112,6 +112,8 @@ const ja = {
     basic: 'ベーシック（Q&A）',
     cloze: '穴埋め（クローズ）',
     imageOcclusion: '画像オクルージョン',
+    chooseTemplate: 'AnkiDroid テンプレートを選択',
+    loadingModels: 'AnkiDroid テンプレートを読み込み中…',
     textWithCloze: '{{code}} を含むテキスト *',
     front: '表面 *',
     back: '裏面 / 補足 *',
@@ -148,6 +150,10 @@ const ja = {
     needsIo: 'IO プラグインが必要',
     ioNoteAvailable:
       '画像オクルージョンには AnkiDroid の Image Occlusion Enhanced アドオンが必要です。アドオンが検出されないため無効になっています。',
+    ankiModels: 'AnkiDroid テンプレート',
+    ankiModelsNote:
+      'AnkiDroid で実際に使用しているテンプレートです。選択したテンプレートでカードが書き込まれます。',
+    noFields: '（フィールドなし）',
     ioNoteMissing:
       '画像オクルージョンには AnkiDroid の Image Occlusion Enhanced アドオンが必要です。未インストールの場合は無効になります。',
   },

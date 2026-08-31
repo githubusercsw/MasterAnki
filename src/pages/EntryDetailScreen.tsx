@@ -32,6 +32,8 @@ import {
 import Inbox from '../plugins/Inbox';
 import AnkiDroid from '../plugins/AnkiDroid';
 import { MODELS } from '../lib/anki/ankidroid';
+import { getSelectedAnkiModel } from '../lib/anki/modelSelection';
+import { findModelByName, mapFieldsToModel } from '../lib/anki/resolveModel';
 import type { InboxEntry, Flashcard } from '../lib/anki/types';
 import { computeSourceHash } from '../lib/anki/dedup';
 import { buildChangeSummary, hasChanges } from '../lib/anki/dedupService';
@@ -212,33 +214,47 @@ const EntryDetailScreen: React.FC = () => {
   /** 构建单卡入库任务（供单卡与批量复用） */
   const buildAddTask = (card: Flashcard) => {
     return async (): Promise<void> => {
-      // 按卡片类型选用对应 Anki 模型（basic/cloze/image_occlusion）
-      const model = MODELS[card.type];
-      await AnkiDroid.ensureModel({
-        modelKey: model.key,
-        fields: model.fields,
-        templates: model.templates,
-      });
-      // 按模型字段映射 note 内容
-      const fields: Record<string, string> = {};
-      for (const f of model.fields) {
-        fields[f] = card.type === 'cloze' && f === 'Text' ? (card.cloze ?? card.front) : '';
-      }
-      fields.Front = card.front;
-      fields.Back = card.back;
+      // 模型名：优先用户所选 AnkiDroid 真实模板，否则按卡片类型内置映射
+      const builtin = MODELS[card.type];
+      const selectedModelName = await getSelectedAnkiModel();
+      const modelKey = selectedModelName || builtin.key;
+
+      // canonical 字段（按卡片类型语义）
+      const canonical: Record<string, string> = {};
+      canonical.Front = card.front;
+      canonical.Back = card.back;
       if (card.type === 'cloze') {
-        fields.Text = card.cloze ?? card.front;
-        fields.Extra = card.back ?? '';
+        canonical.Text = card.cloze ?? card.front;
+        canonical.Extra = card.back ?? '';
       }
       if (card.type === 'image_occlusion') {
-        fields.Image = card.imageUrl ?? '';
-        fields.Occlusion = '';
-        fields.Remarks = card.back ?? '';
+        canonical.Image = card.imageUrl ?? '';
+        canonical.Occlusion = '';
+        canonical.Remarks = card.back ?? '';
       }
+
+      let fields: Record<string, string> = canonical;
+      if (selectedModelName) {
+        // 用户选了真实模板：以其字段名为准映射
+        const realModel = await findModelByName(selectedModelName);
+        fields = mapFieldsToModel(realModel, canonical, {
+          front: card.front,
+          back: card.back,
+          clozeText: card.cloze ?? card.front,
+          imageUrl: card.imageUrl,
+        });
+      }
+
+      // 确保模型存在（原生 resolveModel 会优先精确匹配真实模型名）
+      await AnkiDroid.ensureModel({
+        modelKey,
+        fields: Object.keys(fields),
+        templates: builtin.templates,
+      });
       const result = await AnkiDroid.addNote({
         note: {
           deckName: deckName || 'MasterAnki',
-          modelKey: model.key,
+          modelKey,
           fields,
           tags: card.tags,
         },

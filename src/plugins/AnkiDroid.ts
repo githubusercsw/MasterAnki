@@ -8,6 +8,12 @@ import { registerPlugin } from '@capacitor/core';
 import type { AnkiNote } from '../lib/anki/types';
 import { webAnkiDroid } from './web/ankidroidWeb';
 
+export interface AnkiModelInfo {
+  id: number;
+  name: string;
+  fields: string[];
+}
+
 export interface AnkiDroidPlugin {
   createDeck(options: { name: string }): Promise<void>;
   ensureModel(options: {
@@ -18,6 +24,8 @@ export interface AnkiDroidPlugin {
   addNote(options: { note: AnkiNote }): Promise<{ noteId?: number }>;
   updateNote(options: { noteId: number; note: AnkiNote }): Promise<void>;
   checkDependency(options: { depId: string }): Promise<{ available?: boolean }>;
+  /** 读取 AnkiDroid 中用户实际使用的全部模型 */
+  getModels(): Promise<{ models: AnkiModelInfo[] }>;
 }
 
 const AnkiDroid = registerPlugin<AnkiDroidPlugin>('AnkiDroid', { web: () => webAnkiDroid });

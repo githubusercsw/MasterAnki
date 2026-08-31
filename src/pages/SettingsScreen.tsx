@@ -59,6 +59,8 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../lib/i18n';
 import { LogService } from '../lib/log/logger';
 import type { LogRecord } from '../plugins/Log';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 
 const PROVIDERS: ProviderMeta[] = PROVIDER_META;
 
@@ -174,10 +176,30 @@ const SettingsScreen: React.FC = () => {
     setLogMsg('');
     try {
       const text = await LogService.getInstance().exportText();
-      await navigator.clipboard.writeText(text);
+      const fileName = `masteranki-logs-${new Date().toISOString().slice(0, 10)}.txt`;
+      // 写入应用缓存目录（无需存储权限），再通过系统分享导出
+      const res = await Filesystem.writeFile({
+        path: fileName,
+        data: text,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+      await Share.share({
+        title: 'MasterAnki logs',
+        text: 'MasterAnki 运行日志',
+        files: [res.uri],
+        dialogTitle: t('settings.logExport'),
+      });
       setLogMsg(t('settings.logExported'));
-    } catch (e) {
-      setLogMsg(`${t('settings.logExportFailed')} ${e instanceof Error ? e.message : ''}`);
+    } catch {
+      // 文件分享不可用（Web 等）时回退剪贴板
+      try {
+        const text = await LogService.getInstance().exportText();
+        await navigator.clipboard.writeText(text);
+        setLogMsg(t('settings.logExported'));
+      } catch (e) {
+        setLogMsg(`${t('settings.logExportFailed')} ${e instanceof Error ? e.message : ''}`);
+      }
     }
   };
 

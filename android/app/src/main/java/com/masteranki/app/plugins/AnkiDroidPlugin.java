@@ -127,6 +127,40 @@ public class AnkiDroidPlugin extends Plugin {
         }
     }
 
+    // ==================== 模型读取 ====================
+
+    /** 读取 AnkiDroid 中用户实际使用的全部模型：{ models: [{ id, name, fields }] } */
+    @PluginMethod
+    public void getModels(PluginCall call) {
+        try {
+            AddContentApi api = api();
+            Map<Long, String> models = api.getModelList();
+            JSArray arr = new JSArray();
+            if (models != null) {
+                for (Map.Entry<Long, String> e : models.entrySet()) {
+                    JSObject m = new JSObject();
+                    m.put("id", e.getKey().longValue());
+                    m.put("name", e.getValue() != null ? e.getValue() : "");
+                    String[] fields = api.getFieldList(e.getKey());
+                    JSArray fieldsArr = new JSArray();
+                    if (fields != null) {
+                        for (String f : fields) {
+                            fieldsArr.put(f != null ? f : "");
+                        }
+                    }
+                    m.put("fields", fieldsArr);
+                    arr.put(m);
+                }
+            }
+            JSObject ret = new JSObject();
+            ret.put("models", arr);
+            call.resolve(ret);
+        } catch (Exception e) {
+            logError("AnkiDroid", "getModels", e);
+            call.reject("Failed to get models: " + e.getMessage(), e);
+        }
+    }
+
     // ==================== Notes ====================
 
     @PluginMethod
@@ -148,7 +182,7 @@ public class AnkiDroidPlugin extends Plugin {
 
             AddContentApi api = api();
             long deckId = ensureDeck(api, deckName);
-            long modelId = ensureModel(api, resolveModelName(modelKey));
+            long modelId = resolveModel(api, modelKey);
 
             // 按模型字段顺序拼接 fields 数组（AddContentApi 要求顺序一致）
             String[] fieldOrder = api.getFieldList(modelId);
@@ -190,7 +224,7 @@ public class AnkiDroidPlugin extends Plugin {
                 call.reject("Missing required parameter: note.modelKey");
                 return;
             }
-            long modelId = ensureModel(api, resolveModelName(modelKey));
+            long modelId = resolveModel(api, modelKey);
             String[] fieldOrder = api.getFieldList(modelId);
             if (fieldOrder == null || fieldOrder.length == 0) {
                 call.reject("Cannot resolve field order for model " + modelKey);
@@ -281,6 +315,21 @@ public class AnkiDroidPlugin extends Plugin {
             throw new IllegalStateException("Failed to create deck: " + name);
         }
         return id;
+    }
+
+    /** 解析模型 id：优先按 modelKey 精确匹配 AnkiDroid 已有模型（用户真实模板）；
+     *  匹配不到再用关键字映射内置模型（幂等 ensureModel）。 */
+    private long resolveModel(AddContentApi api, String modelKey) {
+        if (modelKey == null) return ensureModel(api, "Basic");
+        Map<Long, String> models = api.getModelList();
+        if (models != null) {
+            for (Map.Entry<Long, String> e : models.entrySet()) {
+                if (modelKey.equals(e.getValue())) {
+                    return e.getKey();
+                }
+            }
+        }
+        return ensureModel(api, resolveModelName(modelKey));
     }
 
     /** 幂等建模型：按名字在 AnkiDroid 中查找，找不到则用 addNewBasicModel 创建 */

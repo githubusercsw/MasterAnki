@@ -107,6 +107,8 @@ const zh = {
     basic: '基础卡（问答）',
     cloze: '填空卡（补全）',
     imageOcclusion: '图片挖空',
+    chooseTemplate: '选择 AnkiDroid 模板',
+    loadingModels: '正在读取 AnkiDroid 模板…',
     textWithCloze: '含 {{code}} 的文本 *',
     front: '正面 *',
     back: '背面 / 补充 *',
@@ -143,6 +145,9 @@ const zh = {
     needsIo: '需要 IO 插件',
     ioNoteAvailable:
       '图片挖空需要 AnkiDroid 的 Image Occlusion Enhanced 插件。当前未检测到该插件，功能已禁用。',
+    ankiModels: 'AnkiDroid 模板',
+    ankiModelsNote: '以下为你的 AnkiDroid 中实际使用的模板，选择后将用该模板写入卡片。',
+    noFields: '（无字段）',
     ioNoteMissing:
       '图片挖空需要 AnkiDroid 的 Image Occlusion Enhanced 插件。若未安装，功能将被禁用。',
   },
