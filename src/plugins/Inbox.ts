@@ -6,6 +6,7 @@
 
 import { registerPlugin } from '@capacitor/core';
 import type { InboxEntry, Flashcard, CardType } from '../lib/anki/types';
+import { webInbox } from './web/inboxWeb';
 
 /** 页面提交卡片时的草稿结构（不含由数据层赋值的 id/entryId/createdAt/sortOrder/status） */
 export interface CardDraft {
@@ -67,6 +68,6 @@ export interface InboxPlugin {
   }>;
 }
 
-const Inbox = registerPlugin<InboxPlugin>('Inbox');
+const Inbox = registerPlugin<InboxPlugin>('Inbox', { web: () => webInbox });
 
 export default Inbox;

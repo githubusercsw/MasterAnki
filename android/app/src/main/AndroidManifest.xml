@@ -38,4 +38,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- AnkiDroid Instant-Add API 所需权限 -->
+    <uses-permission android:name="com.ichi2.anki.permission.READ_WRITE_DATABASE" />
+
+    <!-- Android 11+ 需显式声明可查询的包（AnkiDroid） -->
+    <queries>
+        <package android:name="com.ichi2.anki" />
+    </queries>
 </manifest>

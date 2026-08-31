@@ -6,6 +6,7 @@
 
 import { registerPlugin } from '@capacitor/core';
 import type { AnkiNote } from '../lib/anki/types';
+import { webAnkiDroid } from './web/ankidroidWeb';
 
 export interface AnkiDroidPlugin {
   createDeck(options: { name: string }): Promise<void>;
@@ -19,6 +20,6 @@ export interface AnkiDroidPlugin {
   checkDependency(options: { depId: string }): Promise<{ available?: boolean }>;
 }
 
-const AnkiDroid = registerPlugin<AnkiDroidPlugin>('AnkiDroid');
+const AnkiDroid = registerPlugin<AnkiDroidPlugin>('AnkiDroid', { web: () => webAnkiDroid });
 
 export default AnkiDroid;

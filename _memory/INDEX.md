@@ -92,6 +92,24 @@ UI/UX 体验提升已落地（详见 docs/phase3-review.md）：
 - 上下文单例：getDefaultContext() 统一存储（Theme/i18n/LLMService 共享）
 - 测试 45/45 全绿（新增 i18n 一致性 4：三语言键一致 + 页面 t() 键全覆盖扫描）
 
+## 六.7、Phase 3.5 进行中（2026-08-31，原生层打通）
+
+根因：android 原生层是空壳（MainActivity 无插件注册），前端 registerPlugin 接口无原生实现 → "not implemented on Android"。
+决策护栏（必读）：docs/phase35-native-deepthink.md
+已确认决策：① Inbox=原生 Room + Web 降级 ② 模板=AnkiDroid 内置模型（Basic/Cloze）③ 新增日志系统。
+契约（前端为契约方）：Inbox 14 方法 / AnkiDroid 5+3 / Settings 3，以 src/plugins/*.ts 为准。
+已完成：
+- native-1 依赖与清单：jitpack/Room/AnkiDroid API + READ_WRITE_DATABASE 权限 + queries 声明
+- native-2 Room 数据层：InboxEntry/Flashcard/LogEntry/StatsEvent 实体 + InboxDao/LogDao/StatsDao + AppDatabase（fallbackToDestructiveMigration）
+- native-3 InboxPlugin.java（Room 实现前端全部 14 接口，含原项目缺的 updateCardOrder/getStats/deleteCards/deleteEntries）
+- native-4 AnkiDroidPlugin.java（AddContentApi 接入；已确认 api-v1.1.0 提供 updateNoteFields/updateNoteTags/getFieldList；内置模型映射 Basic/Cloze/Image Occlusion + 幂等建 deck/model + 权限）
+- native-5 SettingsPlugin.java（SharedPreferences）+ MainActivity 注册三插件
+- native-6 前端 Web 降级：src/plugins/web/{inboxWeb,ankidroidWeb,settingsWeb}.ts 已挂接 registerPlugin
+- native-7 模型策略：MODELS/MODEL_KEYS 改为 AnkiDroid 内置模型名（Basic/Cloze/Image Occlusion）
+- native-8 日志系统：原生 LogPlugin.java（Room 落库 append/getRecent/clear）+ MainActivity 注册 + 前端 src/plugins/Log.ts + web/logWeb.ts + src/lib/log/logger.ts（LogService 单例，捕获 window error/unhandledrejection + 拦截 console info/warn/error + 显式写日志 + exportText 导出）+ SettingsScreen 日志区（查看/导出复制剪贴板/清空）+ 三语翻译键 + 单测 webFallbacks.test.ts（7 项：Log Web 降级 / AnkiDroid Web 降级 / MODEL_KEYS 映射）
+待做：native-9 验证（本地 typecheck/lint/test 已全绿，见下方；原生编译走 GitHub Actions release push tag 或真机冒烟：①收件箱读写 ②保存卡片不再报 not implemented ③模板显示内置模型名 ④入库 Anki 成功 ⑤日志可查看导出）。
+验证限制：本地无 Android SDK，原生编译只能走 GitHub Actions release（push tag）或真机；本地至少 typecheck/lint/test 全绿。
+
 ## 七、下一阶段（Phase 4）入口
 
 学习统计仪表盘（源自需求 F11，方案 v2）：

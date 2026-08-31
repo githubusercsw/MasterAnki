@@ -6,6 +6,7 @@
  */
 
 import { registerPlugin } from '@capacitor/core';
+import { webSettings } from './web/settingsWeb';
 
 export interface SettingsPlugin {
   getSetting(options: { key: string }): Promise<{ value: string | null }>;
@@ -13,6 +14,6 @@ export interface SettingsPlugin {
   deleteSetting(options: { key: string }): Promise<void>;
 }
 
-const Settings = registerPlugin<SettingsPlugin>('Settings');
+const Settings = registerPlugin<SettingsPlugin>('Settings', { web: () => webSettings });
 
 export default Settings;

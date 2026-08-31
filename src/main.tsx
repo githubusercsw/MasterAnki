@@ -4,6 +4,7 @@ import App from './App';
 import { ThemeProvider } from './lib/theme/ThemeContext';
 import { getDefaultContext } from './lib/plugins/context';
 import { initLanguage } from './lib/i18n';
+import { LogService } from './lib/log/logger';
 
 /* Ionic core CSS */
 import '@ionic/react/css/core.css';
@@ -22,6 +23,8 @@ import '@ionic/react/css/palettes/dark.class.css';
 import './index.css';
 
 const ctx = getDefaultContext();
+// 安装全局日志捕获（幂等）
+LogService.getInstance().init();
 // 启动时恢复语言偏好（不阻塞渲染，默认 en 首帧后切换）
 void initLanguage(ctx);
 

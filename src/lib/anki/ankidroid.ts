@@ -11,11 +11,11 @@ import type { AnkiNote, CardType } from './types';
 import AnkiDroid from '../../plugins/AnkiDroid';
 import type { PluginContext } from '../plugins/types';
 
-/** 本项目各卡片类型对应的 note model key */
+/** 本项目各卡片类型对应的 Anki 模型（使用 AnkiDroid 内置模型名） */
 export const MODEL_KEYS: Record<CardType, string> = {
-  basic: 'com.masteranki.basic',
-  cloze: 'com.masteranki.cloze',
-  image_occlusion: 'com.masteranki.image_occlusion',
+  basic: 'Basic',
+  cloze: 'Cloze',
+  image_occlusion: 'Image Occlusion',
 };
 
 /** 各卡片类型 model 定义（含模板） */

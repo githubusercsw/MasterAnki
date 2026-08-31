@@ -33,6 +33,9 @@ import {
   sunnyOutline,
   contrastOutline,
   languageOutline,
+  listOutline,
+  downloadOutline,
+  refreshOutline,
 } from 'ionicons/icons';
 import { LLMService } from '../lib/llm/service';
 import {
@@ -54,6 +57,8 @@ import { getDefaultContext } from '../lib/plugins/context';
 import { setLanguage, SUPPORTED_LANGUAGES, type Language } from '../lib/i18n';
 import { useTranslation } from 'react-i18next';
 import i18n from '../lib/i18n';
+import { LogService } from '../lib/log/logger';
+import type { LogRecord } from '../plugins/Log';
 
 const PROVIDERS: ProviderMeta[] = PROVIDER_META;
 
@@ -62,6 +67,20 @@ const THEME_OPTIONS: Array<{ value: ThemeMode; label: string; icon: string }> = 
   { value: 'dark', label: 'settings.themeDark', icon: moonOutline },
   { value: 'system', label: 'settings.themeSystem', icon: contrastOutline },
 ];
+
+/** 日志级别 → 颜色（用于列表内联样式） */
+function levelColor(level: string): string {
+  switch (level) {
+    case 'error':
+      return '#eb445a';
+    case 'warn':
+      return '#ffc409';
+    case 'debug':
+      return '#92949c';
+    default:
+      return '#3880ff';
+  }
+}
 
 const SettingsScreen: React.FC = () => {
   const history = useHistory();
@@ -75,6 +94,10 @@ const SettingsScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  // 日志区状态
+  const [logs, setLogs] = useState<LogRecord[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logMsg, setLogMsg] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,6 +156,38 @@ const SettingsScreen: React.FC = () => {
   };
 
   const meta = PROVIDERS.find((p) => p.id === activeProvider) ?? PROVIDERS[0];
+
+  /** 刷新日志列表 */
+  const refreshLogs = useCallback(async () => {
+    setLogLoading(true);
+    try {
+      setLogs(await LogService.getInstance().getRecent(200));
+    } catch (e) {
+      setLogMsg(e instanceof Error ? e.message : 'Failed to load logs');
+    } finally {
+      setLogLoading(false);
+    }
+  }, []);
+
+  /** 导出日志（复制到剪贴板） */
+  const exportLogs = async () => {
+    setLogMsg('');
+    try {
+      const text = await LogService.getInstance().exportText();
+      await navigator.clipboard.writeText(text);
+      setLogMsg(t('settings.logExported'));
+    } catch (e) {
+      setLogMsg(`${t('settings.logExportFailed')} ${e instanceof Error ? e.message : ''}`);
+    }
+  };
+
+  /** 清空日志 */
+  const clearLogs = async () => {
+    if (!window.confirm(t('settings.logClearConfirm'))) return;
+    await LogService.getInstance().clear();
+    setLogs([]);
+    setLogMsg(t('settings.logCleared'));
+  };
 
   /** 切换语言并持久化 */
   const onLanguageChange = async (lang: string) => {
@@ -270,7 +325,12 @@ const SettingsScreen: React.FC = () => {
             </IonList>
 
             {/* 自定义提示词 */}
-            <IonAccordionGroup style={{ marginTop: '1rem' }}>
+            <IonAccordionGroup
+              style={{ marginTop: '1rem' }}
+              onIonChange={(e) => {
+                if (e.detail.value === 'logs') void refreshLogs();
+              }}
+            >
               <IonAccordion value="prompts">
                 <IonItem slot="header" color="light">
                   <IonIcon icon={documentTextOutline} slot="start" />
@@ -280,6 +340,113 @@ const SettingsScreen: React.FC = () => {
                   <IonText>
                     <p>{t('settings.customPromptsNote')}</p>
                   </IonText>
+                </div>
+              </IonAccordion>
+
+              {/* 日志区 */}
+              <IonAccordion value="logs">
+                <IonItem slot="header" color="light">
+                  <IonIcon icon={listOutline} slot="start" />
+                  <IonLabel>{t('settings.log')}</IonLabel>
+                </IonItem>
+                <div className="ion-padding" slot="content">
+                  <IonText>
+                    <p>{t('settings.logDesc')}</p>
+                  </IonText>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      margin: '0.75rem 0',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <IonButton
+                      size="small"
+                      onClick={() => void refreshLogs()}
+                      disabled={logLoading}
+                    >
+                      <IonIcon icon={refreshOutline} slot="start" />
+                      {t('settings.logView')}
+                    </IonButton>
+                    <IonButton size="small" fill="outline" onClick={() => void exportLogs()}>
+                      <IonIcon icon={downloadOutline} slot="start" />
+                      {t('settings.logExport')}
+                    </IonButton>
+                    <IonButton
+                      size="small"
+                      fill="outline"
+                      color="danger"
+                      onClick={() => void clearLogs()}
+                    >
+                      <IonIcon icon={trashOutline} slot="start" />
+                      {t('settings.logClear')}
+                    </IonButton>
+                  </div>
+
+                  {logLoading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+                      <IonSpinner />
+                    </div>
+                  ) : logs.length === 0 ? (
+                    <IonText color="medium">
+                      <p>{t('settings.logEmpty')}</p>
+                    </IonText>
+                  ) : (
+                    <IonList
+                      style={{
+                        maxHeight: '16rem',
+                        overflowY: 'auto',
+                        border: '1px solid var(--ion-color-step-200)',
+                        borderRadius: '8px',
+                      }}
+                    >
+                      {logs.map((l) => (
+                        <IonItem key={l.id} lines="inset">
+                          <IonLabel>
+                            <div
+                              style={{
+                                fontSize: '0.7rem',
+                                color: levelColor(l.level),
+                                textTransform: 'uppercase',
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {new Date(l.createdAt).toLocaleString()} · [{l.level}] · {l.tag}
+                            </div>
+                            <div
+                              style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                                fontSize: '0.85rem',
+                                marginTop: '0.2rem',
+                              }}
+                            >
+                              {l.message}
+                              {l.stack && (
+                                <pre
+                                  style={{
+                                    fontSize: '0.7rem',
+                                    whiteSpace: 'pre-wrap',
+                                    margin: '0.3rem 0 0',
+                                    color: 'var(--ion-color-medium)',
+                                  }}
+                                >
+                                  {l.stack}
+                                </pre>
+                              )}
+                            </div>
+                          </IonLabel>
+                        </IonItem>
+                      ))}
+                    </IonList>
+                  )}
+
+                  {logMsg && (
+                    <IonText color="medium">
+                      <p style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>{logMsg}</p>
+                    </IonText>
+                  )}
                 </div>
               </IonAccordion>
             </IonAccordionGroup>
