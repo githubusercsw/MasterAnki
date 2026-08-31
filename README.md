@@ -4,7 +4,7 @@
 
 MasterAnki is an Android app that converts shared text, URLs, PDFs, images, and voice input into AnkiDroid flashcards, powered by **multi-LLM backends** (Gemini, OpenAI, Claude, Ollama, and Chinese providers).
 
-This project is a **from-scratch rebuild** inspired by the functional design of [MasterFlasher](https://github.com/mortsnort/MasterFlasher). It uses a **four-type plugin architecture** (LLM Provider / Input Source / Card Template / Anki Backend) so that new providers, input sources, card templates, and Anki backends can be added without touching the core pipeline.
+MasterAnki uses a **four-type plugin architecture** (LLM Provider / Input Source / Card Template / Anki Backend) so that new providers, input sources, card templates, and Anki backends can be added without touching the core pipeline.
 
 ---
 
