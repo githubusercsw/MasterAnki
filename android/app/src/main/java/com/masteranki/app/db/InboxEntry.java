@@ -1,5 +1,6 @@
 package com.masteranki.app.db;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -7,6 +8,7 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "inbox_entries")
 public class InboxEntry {
     @PrimaryKey
+    @NonNull
     public String id;
 
     /** text | url | pdf | voice | image | youtube | epub */

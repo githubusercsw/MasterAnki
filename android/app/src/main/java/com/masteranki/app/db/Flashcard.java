@@ -1,5 +1,6 @@
 package com.masteranki.app.db;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
@@ -14,6 +15,7 @@ import androidx.room.PrimaryKey;
 )
 public class Flashcard {
     @PrimaryKey
+    @NonNull
     public String id;
 
     public String entryId;
