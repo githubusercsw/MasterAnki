@@ -12,6 +12,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 import com.ichi2.anki.api.AddContentApi;
 import com.masteranki.app.db.AppDatabase;
 import com.masteranki.app.db.LogEntry;
+import com.masteranki.app.db.StatsEvent;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -218,6 +219,8 @@ public class AnkiDroidPlugin extends Plugin {
             }
 
             Long noteId = api.addNote(modelId, deckId, fields, tags);
+            // 统计埋点：card_added（入库成功）
+            recordStats("card_added", 1, null, null);
             JSObject ret = new JSObject();
             ret.put("noteId", noteId != null ? noteId.longValue() : JSONObject.NULL);
             call.resolve(ret);
@@ -373,6 +376,15 @@ public class AnkiDroidPlugin extends Plugin {
             throw new IllegalStateException("Failed to create model: " + name);
         }
         return id;
+    }
+
+    /** 统计埋点：写入 StatsEvent（失败不影响主流程） */
+    private void recordStats(String type, int count, String sourceType, String providerId) {
+        try {
+            AppDatabase.getInstance(getContext()).statsDao().insert(
+                new StatsEvent(type, count, sourceType, providerId, System.currentTimeMillis()));
+        } catch (Exception ignored) {
+        }
     }
 
     private Set<String> toTagSet(JSONArray arr) throws JSONException {

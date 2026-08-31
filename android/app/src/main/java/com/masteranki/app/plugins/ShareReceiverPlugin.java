@@ -9,6 +9,8 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.masteranki.app.db.AppDatabase;
+import com.masteranki.app.db.StatsEvent;
 
 /**
  * ShareReceiver Capacitor 插件（Android 原生实现）。
@@ -55,6 +57,7 @@ public class ShareReceiverPlugin extends Plugin {
             e.putString(KEY_MODE, "file");
             e.putString(KEY_VALUE, stream.toString());
             e.apply();
+            recordShared("file");
             return;
         }
 
@@ -69,6 +72,17 @@ public class ShareReceiverPlugin extends Plugin {
         e.putString(KEY_MODE, mode);
         e.putString(KEY_VALUE, text);
         e.apply();
+        recordShared(mode);
+    }
+
+    /** 统计埋点：source_shared（接收系统分享成功） */
+    private void recordShared(String sourceType) {
+        try {
+            AppDatabase.getInstance(getContext()).statsDao().insert(
+                new StatsEvent("source_shared", 1, sourceType, null, System.currentTimeMillis()));
+        } catch (Exception ignored) {
+            // 统计失败不影响主流程
+        }
     }
 
     // ==================== 前端接口 ====================
