@@ -161,6 +161,32 @@ public class AnkiDroidPlugin extends Plugin {
         }
     }
 
+    // ==================== 牌组读取 ====================
+
+    /** 读取 AnkiDroid 中用户实际使用的全部牌组：{ decks: [{ id, name }] } */
+    @PluginMethod
+    public void getDecks(PluginCall call) {
+        try {
+            AddContentApi api = api();
+            Map<Long, String> decks = api.getDeckList();
+            JSArray arr = new JSArray();
+            if (decks != null) {
+                for (Map.Entry<Long, String> e : decks.entrySet()) {
+                    JSObject d = new JSObject();
+                    d.put("id", e.getKey().longValue());
+                    d.put("name", e.getValue() != null ? e.getValue() : "");
+                    arr.put(d);
+                }
+            }
+            JSObject ret = new JSObject();
+            ret.put("decks", arr);
+            call.resolve(ret);
+        } catch (Exception e) {
+            logError("AnkiDroid", "getDecks", e);
+            call.reject("Failed to get decks: " + e.getMessage(), e);
+        }
+    }
+
     // ==================== Notes ====================
 
     @PluginMethod

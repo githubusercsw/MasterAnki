@@ -19,6 +19,8 @@ import {
   IonInput,
   IonNote,
   IonCheckbox,
+  IonSelect,
+  IonSelectOption,
   IonIcon,
   IonReorderGroup,
   IonReorder,
@@ -30,9 +32,10 @@ import {
   refreshOutline,
 } from 'ionicons/icons';
 import Inbox from '../plugins/Inbox';
-import AnkiDroid from '../plugins/AnkiDroid';
+import AnkiDroid, { type AnkiDeckInfo } from '../plugins/AnkiDroid';
 import { MODELS } from '../lib/anki/ankidroid';
 import { getSelectedAnkiModel } from '../lib/anki/modelSelection';
+import { getSelectedAnkiDeck, setSelectedAnkiDeck } from '../lib/anki/deckSelection';
 import { findModelByName, mapFieldsToModel } from '../lib/anki/resolveModel';
 import type { InboxEntry, Flashcard } from '../lib/anki/types';
 import { computeSourceHash } from '../lib/anki/dedup';
@@ -51,6 +54,10 @@ const EntryDetailScreen: React.FC = () => {
   const [entry, setEntry] = useState<InboxEntry | null>(null);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [deckName, setDeckName] = useState('MasterAnki');
+  // 真实 AnkiDroid 牌组
+  const [realDecks, setRealDecks] = useState<AnkiDeckInfo[]>([]);
+  const [decksLoading, setDecksLoading] = useState(false);
+  const [useCustomDeck, setUseCustomDeck] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState('');
@@ -74,7 +81,13 @@ const EntryDetailScreen: React.FC = () => {
       // 按 sortOrder 升序展示（拖拽排序持久化后保持一致）
       const sorted = [...(res.cards ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       setCards(sorted);
-      if (res.entry.deckName) setDeckName(res.entry.deckName);
+      // 牌组名：条目已保存的优先，否则回退用户已选牌组
+      if (res.entry.deckName) {
+        setDeckName(res.entry.deckName);
+      } else {
+        const saved = await getSelectedAnkiDeck();
+        if (saved) setDeckName(saved);
+      }
       setMessage('');
     } catch {
       setMessage(t('entry.loadFailed'));
@@ -83,6 +96,27 @@ const EntryDetailScreen: React.FC = () => {
 
   useEffect(() => {
     load();
+  }, [id]);
+
+  // 加载 AnkiDroid 真实牌组列表（供选择器/新建牌组用）
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setDecksLoading(true);
+      try {
+        const res = await AnkiDroid.getDecks();
+        if (!cancelled && res.decks && res.decks.length > 0) {
+          setRealDecks(res.decks);
+        }
+      } catch {
+        // API 不可用 → 保持自由输入
+      } finally {
+        if (!cancelled) setDecksLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const ensureExtracted = async (): Promise<string> => {
@@ -118,6 +152,27 @@ const EntryDetailScreen: React.FC = () => {
     await Inbox.saveCards({ entryId: id, cards: cardsToSave });
     await Inbox.lockEntry({ entryId: id });
     await load();
+  };
+
+  // 派生判断：当前 deckName 是否匹配真实牌组列表（匹配则展示选择器，否则回退自由输入）
+  const showDeckSelector =
+    !useCustomDeck && realDecks.length > 0 && realDecks.some((d) => d.name === deckName);
+
+  /** 选择真实牌组：持久化所选牌组名，并同步到条目 */
+  const pickRealDeck = async (name: string) => {
+    await setSelectedAnkiDeck(name);
+    setDeckName(name);
+    setUseCustomDeck(false);
+    try {
+      await Inbox.updateDeckName({ entryId: id, deckName: name });
+    } catch {
+      // 静默：条目级同步失败不影响入库
+    }
+  };
+
+  /** 新建自定义牌组：允许自由输入，入库时原生 ensureDeck 幂等创建 */
+  const pickCustomDeck = () => {
+    setUseCustomDeck(true);
   };
 
   const generate = async () => {
@@ -376,11 +431,31 @@ const EntryDetailScreen: React.FC = () => {
 
             <IonItem>
               <IonLabel position="stacked">{t('entry.deckName')}</IonLabel>
-              <IonInput
-                value={deckName}
-                onIonInput={(e) => setDeckName(String(e.detail.value ?? ''))}
-              />
+              {showDeckSelector ? (
+                <IonSelect
+                  value={deckName}
+                  onIonChange={(e) => void pickRealDeck(String(e.detail.value))}
+                  placeholder={t('entry.chooseDeck')}
+                >
+                  {realDecks.map((d) => (
+                    <IonSelectOption key={d.id} value={d.name}>
+                      {d.name}
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+              ) : (
+                <IonInput
+                  value={deckName}
+                  onIonInput={(e) => setDeckName(String(e.detail.value ?? ''))}
+                />
+              )}
+              {showDeckSelector && (
+                <IonButton size="small" fill="clear" slot="end" onClick={pickCustomDeck}>
+                  {t('entry.newDeck')}
+                </IonButton>
+              )}
             </IonItem>
+            {decksLoading && <IonNote color="medium">{t('entry.loadingDecks')}</IonNote>}
 
             <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
               <IonButton expand="block" onClick={generate} disabled={generating || entry.isLocked}>

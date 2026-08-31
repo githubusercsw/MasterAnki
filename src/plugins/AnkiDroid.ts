@@ -14,6 +14,11 @@ export interface AnkiModelInfo {
   fields: string[];
 }
 
+export interface AnkiDeckInfo {
+  id: number;
+  name: string;
+}
+
 export interface AnkiDroidPlugin {
   createDeck(options: { name: string }): Promise<void>;
   ensureModel(options: {
@@ -26,6 +31,8 @@ export interface AnkiDroidPlugin {
   checkDependency(options: { depId: string }): Promise<{ available?: boolean }>;
   /** 读取 AnkiDroid 中用户实际使用的全部模型 */
   getModels(): Promise<{ models: AnkiModelInfo[] }>;
+  /** 读取 AnkiDroid 中用户实际使用的全部牌组 */
+  getDecks(): Promise<{ decks: AnkiDeckInfo[] }>;
 }
 
 const AnkiDroid = registerPlugin<AnkiDroidPlugin>('AnkiDroid', { web: () => webAnkiDroid });

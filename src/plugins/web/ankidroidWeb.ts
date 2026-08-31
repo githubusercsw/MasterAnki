@@ -6,7 +6,7 @@
  * - 写操作抛明确错误，避免静默失败。
  */
 
-import type { AnkiDroidPlugin, AnkiModelInfo } from '../AnkiDroid';
+import type { AnkiDroidPlugin, AnkiModelInfo, AnkiDeckInfo } from '../AnkiDroid';
 
 function nativeOnly(op: string): never {
   throw new Error(`AnkiDroid.${op} 仅在 Android 原生环境可用（Web 开发环境不可用）`);
@@ -19,6 +19,9 @@ const BUILTIN_MODELS: AnkiModelInfo[] = [
   { id: 3, name: 'Image Occlusion', fields: ['Image', 'Occlusion', 'Remarks'] },
 ];
 
+/** Web 环境内置牌组列表（与默认牌组名对齐） */
+const BUILTIN_DECKS: AnkiDeckInfo[] = [{ id: 1, name: 'MasterAnki' }];
+
 export const webAnkiDroid: AnkiDroidPlugin = {
   async createDeck() {
     nativeOnly('createDeck');
@@ -26,6 +29,10 @@ export const webAnkiDroid: AnkiDroidPlugin = {
 
   async getModels() {
     return { models: BUILTIN_MODELS };
+  },
+
+  async getDecks() {
+    return { decks: BUILTIN_DECKS };
   },
 
   async ensureModel() {
