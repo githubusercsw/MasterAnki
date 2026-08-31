@@ -63,6 +63,7 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
 - **模型策略**：优先用户所选真实模型（`getSelectedAnkiModel()`），未选则回退内置映射（Basic/Cloze/IO）。
 - **Capacitor 8 API**：PluginCall 无 has/isNull（用 getData().has）；JSArray 用 getJSONObject(i)；详见 docs/phase35-pitfalls.md。
 - **推送**：main 含 workflow 文件，push 用 SSH（PAT 无 workflow scope）；deploy key 在 GitHub 已注册。
-- **环境重置**：/root、/tmp 会重置，SSH 密钥/Node22 放 `_tools/`；重置后 `apt-get install openssh-client` + 重建 `~/.ssh`。
+- **环境重置**：/root、/tmp 会重置，SSH 密钥/Node22 放 `_tools/`；重置后 `apt-get install openssh-client` + 重建 `~/.ssh`（`_tools/ssh/` 副本仅供备份，文件系统不响应 chmod，勿直接用于连接）。
+- **SSH 教训**：若 `.git/config` 残留 `core.sshCommand` 指向易失路径（如 `/tmp/sshkeys/...`），`git config --unset core.sshCommand` 改用 `~/.ssh/config`（IdentityFile=~/.ssh/id_ed25519）。
 - **CI 触发**：push main → 质量门禁；push tag v* → 构建并发布 APK。
 - **git 锁**：commit 被中断时清 `.git/index.lock` 后重试。
