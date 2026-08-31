@@ -16,8 +16,8 @@ import com.masteranki.app.db.LogEntry;
 import com.masteranki.app.db.StatsEvent;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -161,7 +161,7 @@ public class InboxPlugin extends Plugin {
             long now = System.currentTimeMillis();
             List<Flashcard> cards = new ArrayList<>();
             for (int i = 0; i < cardsArr.length(); i++) {
-                JSObject c = cardsArr.getJSObject(i);
+                JSONObject c = cardsArr.getJSONObject(i);
                 String cardId = UUID.randomUUID().toString();
                 String type = c.has("type") && !c.isNull("type") ? c.getString("type") : "basic";
                 Flashcard fc = new Flashcard(
@@ -200,13 +200,13 @@ public class InboxPlugin extends Plugin {
         }
         try {
             String tags = call.getArray("tags") != null ? call.getArray("tags").toString() : null;
-            String type = call.has("type") && !call.isNull("type") ? call.getString("type") : "basic";
+            String type = call.getData().has("type") && !call.getData().isNull("type") ? call.getString("type") : "basic";
             dao().updateCardContent(
                 cardId,
                 call.getString("front"),
                 call.getString("back"),
-                call.has("cloze") && !call.isNull("cloze") ? call.getString("cloze") : null,
-                call.has("imageUrl") && !call.isNull("imageUrl") ? call.getString("imageUrl") : null,
+                call.getData().has("cloze") && !call.getData().isNull("cloze") ? call.getString("cloze") : null,
+                call.getData().has("imageUrl") && !call.getData().isNull("imageUrl") ? call.getString("imageUrl") : null,
                 type,
                 tags
             );
@@ -226,7 +226,7 @@ public class InboxPlugin extends Plugin {
         }
         try {
             String status = call.getString("status");
-            Long noteId = call.has("noteId") && !call.isNull("noteId") ? call.getLong("noteId") : null;
+            Long noteId = call.getData().has("noteId") && !call.getData().isNull("noteId") ? call.getLong("noteId") : null;
             dao().updateCardStatus(cardId, status, noteId);
             call.resolve();
         } catch (Exception e) {
@@ -277,7 +277,7 @@ public class InboxPlugin extends Plugin {
             return;
         }
         try {
-            String title = call.has("title") && !call.isNull("title") ? call.getString("title") : null;
+            String title = call.getData().has("title") && !call.getData().isNull("title") ? call.getString("title") : null;
             dao().updateExtractedContent(entryId, call.getString("extractedText"), title);
             call.resolve();
         } catch (Exception e) {
@@ -323,8 +323,8 @@ public class InboxPlugin extends Plugin {
     @PluginMethod
     public void getStats(PluginCall call) {
         try {
-            long from = call.has("from") && !call.isNull("from") ? call.getLong("from") : 0L;
-            long to = call.has("to") && !call.isNull("to") ? call.getLong("to") : Long.MAX_VALUE;
+            long from = call.getData().has("from") && !call.getData().isNull("from") ? call.getLong("from") : 0L;
+            long to = call.getData().has("to") && !call.getData().isNull("to") ? call.getLong("to") : Long.MAX_VALUE;
             List<StatsEvent> events = AppDatabase.getInstance(getContext()).statsDao().getRange(from, to);
             JSArray arr = new JSArray();
             for (StatsEvent ev : events) {

@@ -13,6 +13,7 @@ import com.ichi2.anki.api.AddContentApi;
 import com.masteranki.app.db.AppDatabase;
 import com.masteranki.app.db.LogEntry;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -168,7 +169,7 @@ public class AnkiDroidPlugin extends Plugin {
 
     @PluginMethod
     public void updateNote(PluginCall call) {
-        if (!call.has("noteId") || call.isNull("noteId")) {
+        if (!call.getData().has("noteId") || call.getData().isNull("noteId")) {
             call.reject("Missing required parameter: noteId");
             return;
         }
@@ -299,7 +300,7 @@ public class AnkiDroidPlugin extends Plugin {
         return id;
     }
 
-    private Set<String> toTagSet(JSArray arr) throws JSONException {
+    private Set<String> toTagSet(JSONArray arr) throws JSONException {
         if (arr == null) return null;
         Set<String> tags = new HashSet<>();
         for (int i = 0; i < arr.length(); i++) {

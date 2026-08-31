@@ -35,7 +35,7 @@ public class LogPlugin extends Plugin {
             call.reject("Missing required parameters: level, tag, message");
             return;
         }
-        String stack = call.has("stack") && !call.isNull("stack") ? call.getString("stack") : null;
+        String stack = call.getData().has("stack") && !call.getData().isNull("stack") ? call.getString("stack") : null;
         try {
             logDao().insert(new LogEntry(level, tag, message, stack, System.currentTimeMillis()));
             call.resolve();
@@ -47,7 +47,7 @@ public class LogPlugin extends Plugin {
     /** 取最近 N 条日志：{ limit? } → { logs: [...] } */
     @PluginMethod
     public void getRecent(PluginCall call) {
-        int limit = call.has("limit") && !call.isNull("limit") ? call.getInt("limit") : 100;
+        int limit = call.getData().has("limit") && !call.getData().isNull("limit") ? call.getInt("limit") : 100;
         try {
             List<LogEntry> logs = logDao().getRecent(Math.max(1, limit));
             JSArray arr = new JSArray();
