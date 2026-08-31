@@ -1,0 +1,116 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+
+  --ma-bg: #f4f5f7;
+  --ma-surface: #ffffff;
+  --ma-text: #1a1a2e;
+  --ma-text-secondary: #55557a;
+  --ma-accent: #4f46e5;
+  --ma-accent-soft: #eef0ff;
+  --ma-border: #e3e5ee;
+  --ma-danger: #dc2626;
+
+  background-color: var(--ma-bg);
+  color: var(--ma-text);
+}
+
+/* 类驱动深色（由 ThemeContext 添加 .ion-palette-dark 到 html） */
+html.ion-palette-dark {
+  --ma-bg: #141420;
+  --ma-surface: #1e1e2e;
+  --ma-text: #e8e8f0;
+  --ma-text-secondary: #9a9ab5;
+  --ma-accent: #818cf8;
+  --ma-accent-soft: #2a2a45;
+  --ma-border: #33334d;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ---------- Markdown 渲染样式 ---------- */
+.ma-markdown {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.ma-markdown h1,
+.ma-markdown h2,
+.ma-markdown h3 {
+  margin: 0.6em 0 0.3em;
+}
+.ma-markdown p {
+  margin: 0.4em 0;
+}
+.ma-markdown ul,
+.ma-markdown ol {
+  margin: 0.4em 0;
+  padding-left: 1.4em;
+}
+.ma-markdown table {
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  width: 100%;
+}
+.ma-markdown th,
+.ma-markdown td {
+  border: 1px solid var(--ma-border);
+  padding: 0.35em 0.6em;
+  text-align: left;
+}
+.ma-markdown th {
+  background: var(--ma-accent-soft);
+}
+.ma-markdown code {
+  background: var(--ma-accent-soft);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.ma-markdown pre {
+  background: var(--ma-surface);
+  border: 1px solid var(--ma-border);
+  border-radius: 8px;
+  padding: 0.6em 0.9em;
+  overflow-x: auto;
+}
+.ma-markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+.ma-markdown blockquote {
+  border-left: 3px solid var(--ma-accent);
+  margin: 0.5em 0;
+  padding-left: 0.8em;
+  color: var(--ma-text-secondary);
+}
+.ma-markdown a {
+  color: var(--ma-accent);
+}
+.ma-markdown-compact p {
+  margin: 0.15em 0;
+}
+
+/* 卡片变更摘要中的删除线 */
+.ma-strikethrough {
+  text-decoration: line-through;
+  color: var(--ma-text-secondary);
+  opacity: 0.7;
+}

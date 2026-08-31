@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MasterAnki</string>
+    <string name="title_activity_main">MasterAnki</string>
+    <string name="package_name">com.masteranki.app</string>
+    <string name="custom_url_scheme">com.masteranki.app</string>
+</resources>
