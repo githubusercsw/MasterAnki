@@ -50,13 +50,13 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
   - b. 存储权限 → Manifest 补 READ/WRITE_EXTERNAL_STORAGE + READ_MEDIA_*；日志导出写缓存文件 + 系统分享
   - c. 系统分享 → MainActivity 加 ACTION_SEND intent-filter + 原生 ShareReceiverPlugin + web 降级
 - [x] 深度差距分析 + 口头汇报（2026-08-31，对照计划书 F1-F20 逐项核查，结论：完成 9.5/20，4 大核心差距，见 docs/phase36-gap-analysis.md）
-- [ ] **Phase 3.6 原生能力补齐（下一阶段，已获用户确认规划，见 docs/phase36-gap-analysis.md）**：
-  - 3.6-1 牌组 API：`getDecks()` + `deckSelection.ts` + 牌组选择器（读真实列表/可新建）
-  - 3.6-2 模板↔牌组联动入库
-  - 3.6-3 卡片编辑同步 AnkiDroid（noteId 存在时 updateNote）
-  - 3.6-4 StatsEvent 采集埋点（生成/入库/分享）
-  - 3.6-5 补单测（deckSelection/modelSelection/resolveModel）
-  - 3.6-6 真机冒烟回归
+- [ ] **Phase 3.6 原生能力补齐（进行中，已获用户确认规划，见 docs/phase36-gap-analysis.md）**：
+  - [x] 3.6-1 牌组 API（commit 032b4dc）：原生 `getDecks()` + `deckSelection.ts` + ManualCreate/EntryDetail 牌组选择器（读真实列表/可新建）
+  - [x] 3.6-2 模板↔牌组联动（commit d790d44）：TemplateSelectScreen 同屏选牌组，选模板时一并持久化
+  - [x] 3.6-3 编辑同步（commit 0cb4a2f）：`noteBuilder.ts` 公共构建 + CardEditorScreen noteId 存在时 `updateNote` 同步，失败置 error
+  - [ ] 3.6-4 StatsEvent 采集埋点（生成/入库/分享）
+  - [ ] 3.6-5 补单测（deckSelection/modelSelection/resolveModel）
+  - [ ] 3.6-6 真机冒烟回归（含 push tag 触发原生编译验证）
 - [ ] Phase 4 学习统计仪表盘（StatsEvent 表已预埋，采集层待 3.6-4 埋点）
 
 ## 六、关键约定 / 教训
@@ -67,3 +67,4 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
 - **SSH 教训**：若 `.git/config` 残留 `core.sshCommand` 指向易失路径（如 `/tmp/sshkeys/...`），`git config --unset core.sshCommand` 改用 `~/.ssh/config`（IdentityFile=~/.ssh/id_ed25519）。
 - **CI 触发**：push main → 质量门禁；push tag v* → 构建并发布 APK。
 - **git 锁**：commit 被中断时清 `.git/index.lock` 后重试。
+- **vitest 本地环境坑**：此沙箱 vitest 默认 threads 池卡死（无输出挂起）；本地跑测试须 `node node_modules/vitest/dist/cli.js run --pool=forks --poolOptions.forks.singleFork=true --no-file-parallelism`（单 fork 全量 52/52 正常）。CI 用 `npm run test:coverage` 不受影响，勿改项目配置。
