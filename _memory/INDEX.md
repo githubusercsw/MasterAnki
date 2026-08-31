@@ -107,7 +107,19 @@ UI/UX 体验提升已落地（详见 docs/phase3-review.md）：
 - native-6 前端 Web 降级：src/plugins/web/{inboxWeb,ankidroidWeb,settingsWeb}.ts 已挂接 registerPlugin
 - native-7 模型策略：MODELS/MODEL_KEYS 改为 AnkiDroid 内置模型名（Basic/Cloze/Image Occlusion）
 - native-8 日志系统：原生 LogPlugin.java（Room 落库 append/getRecent/clear）+ MainActivity 注册 + 前端 src/plugins/Log.ts + web/logWeb.ts + src/lib/log/logger.ts（LogService 单例，捕获 window error/unhandledrejection + 拦截 console info/warn/error + 显式写日志 + exportText 导出）+ SettingsScreen 日志区（查看/导出复制剪贴板/清空）+ 三语翻译键 + 单测 webFallbacks.test.ts（7 项：Log Web 降级 / AnkiDroid Web 降级 / MODEL_KEYS 映射）
-待做：native-9 验证（本地 typecheck/lint/test 已全绿，见下方；原生编译走 GitHub Actions release push tag 或真机冒烟：①收件箱读写 ②保存卡片不再报 not implemented ③模板显示内置模型名 ④入库 Anki 成功 ⑤日志可查看导出）。
+- native-9 验证：本地 typecheck/lint/test 全绿；原生编译经 GitHub Actions release 验证通过（v0.2.3 APK 构建成功）。
+
+## 六.8、Phase 3.5 原生编译踩坑（GitHub Actions 已全通）
+
+| 错误 | 根因 | 修复 |
+|------|------|------|
+| compileDebugJavaWithJavac 崩溃（Metadata 2.1.0 > 2.0.0） | Room 2.6.1 annotationProcessor 内嵌 kotlinx-metadata-jvm 仅支持到 2.0.0，Capacitor 8 插件由 Kotlin 2.1 编译（metadata 2.1.0） | Room 升级 2.6.1→2.8.4 |
+| 主键字段需 @NonNull | Room 2.8 要求 String 主键显式 @NonNull（SQLite 视 nullable 主键为 bug） | InboxEntry/Flashcard 的 id 加 @NonNull |
+| PluginCall 无 has()/isNull() | Capacitor 8 的 PluginCall 无这两个方法（hasOption 已废弃） | 改用 call.getData().has()/.isNull() |
+| JSArray 无 getJSObject(int) | JSArray extends JSONArray，无 getJSObject | 改用 getJSONObject(i)（返回 JSONObject） |
+| toTagSet 类型不匹配 | note.getJSONArray 返回 org.json.JSONArray，入参却是 JSArray | 入参改 JSONArray |
+
+真机冒烟清单（待用户执行）：①收件箱读写 ②保存卡片不再报 not implemented ③模板显示内置模型名（Basic/Cloze/Image Occlusion）④入库 Anki 成功（需 AnkiDroid 已授权插件 API）⑤设置页日志可查看/导出/清空。
 验证限制：本地无 Android SDK，原生编译只能走 GitHub Actions release（push tag）或真机；本地至少 typecheck/lint/test 全绿。
 
 ## 七、下一阶段（Phase 4）入口
