@@ -1,7 +1,7 @@
 # MasterAnki 项目状态索引（上下文压缩恢复入口）
 
 > **恢复方法**：读本文件即可秒级恢复关键指针；需要细节时按「文档指针」跳转对应 docs/*.md。
-> 最近更新：2026-08-31（Phase 3.5 完成 + 3 BUG 修复 + Phase 3.6 规划就绪）
+> 最近更新：2026-08-31（Phase 3.5 完成 + 3 BUG 修复 + 深度差距分析/口头汇报完成 + v0.2.4 验证通过，Phase 3.6 待实施）
 
 ## 一、项目定位
 MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + React 19 + Ionic 8 + Room）。
@@ -32,7 +32,7 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
 | `npm run typecheck` | ✅ 通过 |
 | `npm run lint` | ✅ 0 error |
 | `npm run test` | ✅ 52/52（validateJson 8 + providers 11 + dedup 10 + batch 5 + export 7 + i18n 4 + webFallbacks 7） |
-| 原生 gradle 编译 | ✅ GitHub Actions 验证通过（v0.2.3 APK，debug 签名） |
+| 原生 gradle 编译 | ✅ GitHub Actions 验证通过（v0.2.4 APK，debug 签名，含 getModels/ShareReceiver 新增） |
 | 依赖 | ✅ node_modules 完整（npmmirror 镜像） |
 
 ## 四、三根源性问题治理
@@ -49,7 +49,8 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
   - a. 模板读取 → `getModels()` 真实模板 + 模板/建卡页读真实模型 + 持久化 + 入库用所选模型
   - b. 存储权限 → Manifest 补 READ/WRITE_EXTERNAL_STORAGE + READ_MEDIA_*；日志导出写缓存文件 + 系统分享
   - c. 系统分享 → MainActivity 加 ACTION_SEND intent-filter + 原生 ShareReceiverPlugin + web 降级
-- [ ] **Phase 3.6 原生能力补齐（下一阶段，见 docs/phase36-gap-analysis.md）**：
+- [x] 深度差距分析 + 口头汇报（2026-08-31，对照计划书 F1-F20 逐项核查，结论：完成 9.5/20，4 大核心差距，见 docs/phase36-gap-analysis.md）
+- [ ] **Phase 3.6 原生能力补齐（下一阶段，已获用户确认规划，见 docs/phase36-gap-analysis.md）**：
   - 3.6-1 牌组 API：`getDecks()` + `deckSelection.ts` + 牌组选择器（读真实列表/可新建）
   - 3.6-2 模板↔牌组联动入库
   - 3.6-3 卡片编辑同步 AnkiDroid（noteId 存在时 updateNote）
