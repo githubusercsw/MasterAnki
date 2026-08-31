@@ -16,10 +16,7 @@ import type { LLMProvider } from './provider';
 import type { PluginContext } from '../plugins/types';
 import { ConfigSource } from '../config/configSource';
 import { PromptService } from '../settings/promptConfig';
-import {
-  getActiveProviderId,
-  setActiveProviderId,
-} from '../settings/secureStorage';
+import { getActiveProviderId, setActiveProviderId } from '../settings/secureStorage';
 
 export const ACTIVE_PROVIDER_STORAGE_KEY = 'masteranki:provider:active';
 

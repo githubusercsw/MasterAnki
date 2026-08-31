@@ -32,7 +32,18 @@ const locales = { en, zh, ja };
 describe('i18n 语言包一致性', () => {
   it('三个语言包包含全部命名空间', () => {
     for (const [name, data] of Object.entries(locales)) {
-      for (const ns of ['common', 'app', 'inbox', 'entry', 'settings', 'create', 'editor', 'template', 'confirmGate', 'actions']) {
+      for (const ns of [
+        'common',
+        'app',
+        'inbox',
+        'entry',
+        'settings',
+        'create',
+        'editor',
+        'template',
+        'confirmGate',
+        'actions',
+      ]) {
         expect(data, `${name} 缺命名空间 ${ns}`).toHaveProperty(ns);
       }
     }
@@ -56,7 +67,9 @@ describe('i18n 语言包一致性', () => {
 
   it('语言包非空且有内容', () => {
     for (const [name, data] of Object.entries(locales)) {
-      expect(flattenKeys(data as Record<string, unknown>).length, `${name} 为空`).toBeGreaterThan(30);
+      expect(flattenKeys(data as Record<string, unknown>).length, `${name} 为空`).toBeGreaterThan(
+        30
+      );
     }
   });
 

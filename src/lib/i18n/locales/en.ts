@@ -49,7 +49,8 @@ const en = {
     deleteFailed: 'Delete failed',
     loadFailed: 'Failed to load entry',
     persistOrderFailed: 'Failed to persist order',
-    extractionNeedsNative: 'URL/PDF extraction requires native environment. Paste content manually.',
+    extractionNeedsNative:
+      'URL/PDF extraction requires native environment. Paste content manually.',
     noText: 'No text to generate from.',
     generationFailed: 'Generation failed',
     incrementalTitle: 'Incremental update',

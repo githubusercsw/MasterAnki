@@ -7,10 +7,7 @@
 
 import type { LLMProvider } from './provider';
 import type { FactsResponse, FlashcardsResponse, Flashcard, Fact } from '../anki/types';
-import {
-  validateFactsResponse,
-  validateFlashcardsResponse,
-} from '../validation/validateJson';
+import { validateFactsResponse, validateFlashcardsResponse } from '../validation/validateJson';
 import type { CardType } from '../anki/types';
 
 /** 事实提取的最大文本块大小（与上下文长度平衡） */
@@ -194,7 +191,11 @@ ${chunk}`;
       const prompt = `${this.prompts.factScoringPrompt}
 
 Facts to score:
-${JSON.stringify(b.map((f) => ({ id: f.id, fact: f.fact })), null, 2)}`;
+${JSON.stringify(
+  b.map((f) => ({ id: f.id, fact: f.fact })),
+  null,
+  2
+)}`;
       const res = await this.provider.generateContent(prompt, { schema: SCORE_SCHEMA });
       if (res.finishReason !== 'stop' || !res.text) continue;
 
@@ -223,7 +224,10 @@ ${JSON.stringify(b.map((f) => ({ id: f.id, fact: f.fact })), null, 2)}`;
   }
 
   /** 步骤 3：卡片生成（分批防截断） */
-  async generateFlashcards(facts: Fact[], cardType: CardType = 'basic'): Promise<FlashcardsResponse> {
+  async generateFlashcards(
+    facts: Fact[],
+    cardType: CardType = 'basic'
+  ): Promise<FlashcardsResponse> {
     if (facts.length === 0) {
       return { deck: 'MasterAnki', cards: [] };
     }
@@ -256,7 +260,11 @@ ${JSON.stringify(batches[i], null, 2)}`;
   }
 
   /** 完整三步流程 */
-  async run(text: string, title?: string, cardType: CardType = 'basic'): Promise<FlashcardsResponse> {
+  async run(
+    text: string,
+    title?: string,
+    cardType: CardType = 'basic'
+  ): Promise<FlashcardsResponse> {
     const factsResp = await this.generateFacts(text, title);
     const scored = await this.scoreFacts(factsResp.facts);
     return this.generateFlashcards(scored, cardType);

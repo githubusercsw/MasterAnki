@@ -44,40 +44,29 @@ jobs:
                      "platforms;android-34" \
                      "build-tools;34.0.0"
 
-      - name: Build Gradle Release
+      # 初测阶段：构建 debug APK（debug 自动签名，可直接安装，无需 secrets）
+      - name: Build Gradle Debug APK
         working-directory: ./android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
 
-      # 发布冒烟验证门禁：校验签名与最小 SDK，验证不通过则发布失败
+      # 发布冒烟验证门禁：校验 APK 存在与包信息，验证不通过则发布失败
       - name: Smoke Check APK (aapt verify)
         working-directory: ./android
         run: |
-          APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
           echo "APK=$APK"
           test -n "$APK"
           aapt dump badging "$APK" | head -3
 
-      - name: Sign APK
-        id: sign_app
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: android/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: '34.0.0'
-
-      - name: Rename Signed APK
+      - name: Rename APK
         run: |
-          mv "${{ steps.sign_app.outputs.signedReleaseFile }}" \
-             "android/app/build/outputs/apk/release/MasterAnki-${{ github.ref_name }}.apk"
+          mv "$(find android/app/build/outputs/apk/debug -name '*.apk' | head -1)" \
+             "android/app/build/outputs/apk/debug/MasterAnki-${{ github.ref_name }}.apk"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: android/app/build/outputs/apk/release/MasterAnki-${{ github.ref_name }}.apk
+          files: android/app/build/outputs/apk/debug/MasterAnki-${{ github.ref_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

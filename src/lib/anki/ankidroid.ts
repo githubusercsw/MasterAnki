@@ -23,16 +23,12 @@ export const MODELS: Record<CardType, NoteModel> = {
   basic: {
     key: MODEL_KEYS.basic,
     fields: ['Front', 'Back'],
-    templates: [
-      { name: 'Card 1', qfmt: '{{Front}}', afmt: '{{Front}}<hr id="answer">{{Back}}' },
-    ],
+    templates: [{ name: 'Card 1', qfmt: '{{Front}}', afmt: '{{Front}}<hr id="answer">{{Back}}' }],
   },
   cloze: {
     key: MODEL_KEYS.cloze,
     fields: ['Text', 'Extra'],
-    templates: [
-      { name: 'Cloze', qfmt: '{{cloze:Text}}', afmt: '{{cloze:Text}}<br>{{Extra}}' },
-    ],
+    templates: [{ name: 'Cloze', qfmt: '{{cloze:Text}}', afmt: '{{cloze:Text}}<br>{{Extra}}' }],
   },
   image_occlusion: {
     key: MODEL_KEYS.image_occlusion,

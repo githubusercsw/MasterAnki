@@ -62,10 +62,9 @@ export interface InboxPlugin {
   lockEntry(options: { entryId: string }): Promise<void>;
   deleteCards(options: { cardIds: string[] }): Promise<void>;
   deleteEntries(options: { ids: string[] }): Promise<void>;
-  getStats(options?: {
-    from?: number;
-    to?: number;
-  }): Promise<{ events: Array<{ type: string; count: number; sourceType: string; createdAt: number }> }>;
+  getStats(options?: { from?: number; to?: number }): Promise<{
+    events: Array<{ type: string; count: number; sourceType: string; createdAt: number }>;
+  }>;
 }
 
 const Inbox = registerPlugin<InboxPlugin>('Inbox');

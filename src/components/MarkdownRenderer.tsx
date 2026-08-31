@@ -25,7 +25,11 @@ export interface MarkdownRendererProps {
   className?: string;
 }
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, compact = false, className }) => {
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+  content,
+  compact = false,
+  className,
+}) => {
   return (
     <div
       className={`ma-markdown${compact ? ' ma-markdown-compact' : ''}${className ? ` ${className}` : ''}`}
@@ -35,7 +39,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, compact = 
         rehypePlugins={[rehypeKatex, rehypeHighlight]}
         components={{
           a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
-          img: ({ node, ...props }) => <img {...props} style={{ maxWidth: '100%', borderRadius: 6 }} />,
+          img: ({ node, ...props }) => (
+            <img {...props} style={{ maxWidth: '100%', borderRadius: 6 }} />
+          ),
         }}
       >
         {content}

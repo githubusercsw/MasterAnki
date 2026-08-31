@@ -171,7 +171,10 @@ const SettingsScreen: React.FC = () => {
             <IonList>
               <IonItem>
                 <IonLabel>{t('settings.provider')}</IonLabel>
-                <IonSelect value={activeProvider} onIonChange={(e) => onProviderChange(String(e.detail.value))}>
+                <IonSelect
+                  value={activeProvider}
+                  onIonChange={(e) => onProviderChange(String(e.detail.value))}
+                >
                   {PROVIDERS.map((p) => (
                     <IonSelectOption key={p.id} value={p.id}>
                       {p.name}
@@ -235,7 +238,10 @@ const SettingsScreen: React.FC = () => {
             <IonList>
               <IonItem>
                 <IonLabel>{t('settings.theme')}</IonLabel>
-                <IonSelect value={themeMode} onIonChange={(e) => setThemeMode(String(e.detail.value) as ThemeMode)}>
+                <IonSelect
+                  value={themeMode}
+                  onIonChange={(e) => setThemeMode(String(e.detail.value) as ThemeMode)}
+                >
                   {THEME_OPTIONS.map((opt) => (
                     <IonSelectOption key={opt.value} value={opt.value}>
                       <IonIcon icon={opt.icon} slot="start" /> {t(opt.label)}
@@ -247,7 +253,13 @@ const SettingsScreen: React.FC = () => {
                 <IonIcon icon={languageOutline} slot="start" />
                 <IonLabel>{t('settings.language')}</IonLabel>
                 <IonSelect
-                  value={i18n.language?.startsWith('zh') ? 'zh' : i18n.language?.startsWith('ja') ? 'ja' : 'en'}
+                  value={
+                    i18n.language?.startsWith('zh')
+                      ? 'zh'
+                      : i18n.language?.startsWith('ja')
+                        ? 'ja'
+                        : 'en'
+                  }
                   onIonChange={(e) => onLanguageChange(String(e.detail.value))}
                 >
                   <IonSelectOption value="en">{t('settings.languageEn')}</IonSelectOption>
@@ -294,7 +306,13 @@ const SettingsScreen: React.FC = () => {
                 {saving ? <IonSpinner name="crescent" /> : t('settings.saveSettings')}
               </IonButton>
               {apiKey && (
-                <IonButton expand="block" fill="outline" color="danger" onClick={clear} style={{ marginTop: '0.5rem' }}>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  color="danger"
+                  onClick={clear}
+                  style={{ marginTop: '0.5rem' }}
+                >
                   <IonIcon icon={trashOutline} slot="start" />
                   {t('settings.clearKey')}
                 </IonButton>

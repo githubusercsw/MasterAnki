@@ -66,10 +66,7 @@ export class ClaudeProvider implements LLMProvider {
     return { apiKey, model };
   }
 
-  async generateContent(
-    prompt: string,
-    options: LLMGenerateOptions = {}
-  ): Promise<LLMResponse> {
+  async generateContent(prompt: string, options: LLMGenerateOptions = {}): Promise<LLMResponse> {
     const { apiKey, model } = await this.resolveConfig();
 
     const messages: AnthropicMessage[] = [{ role: 'user', content: prompt }];
@@ -113,18 +110,23 @@ export class ClaudeProvider implements LLMProvider {
       if (toolBlock?.input !== undefined) {
         text = JSON.stringify(toolBlock.input);
       } else {
-        text = data.content
-          ?.filter((b): b is ContentBlock & { text: string } => b.type === 'text' && !!b.text)
-          .map((b) => b.text)
-          .join('') ?? '';
+        text =
+          data.content
+            ?.filter((b): b is ContentBlock & { text: string } => b.type === 'text' && !!b.text)
+            .map((b) => b.text)
+            .join('') ?? '';
       }
 
       const stop = data.stop_reason ?? 'end_turn';
       return {
         text,
-        finishReason: stop === 'max_tokens' ? 'max_tokens' : stop === 'stop_sequence' ? 'stop' : 'stop',
+        finishReason:
+          stop === 'max_tokens' ? 'max_tokens' : stop === 'stop_sequence' ? 'stop' : 'stop',
         usage: data.usage
-          ? { inputTokens: data.usage.input_tokens ?? 0, outputTokens: data.usage.output_tokens ?? 0 }
+          ? {
+              inputTokens: data.usage.input_tokens ?? 0,
+              outputTokens: data.usage.output_tokens ?? 0,
+            }
           : undefined,
       };
     } catch (e) {

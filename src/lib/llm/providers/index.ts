@@ -26,10 +26,7 @@ export function buildAllProviders(): LLMProvider[] {
   ];
 }
 
-export {
-  GEMINI_PROVIDER_ID,
-  DEFAULT_GEMINI_MODEL,
-} from './gemini';
+export { GEMINI_PROVIDER_ID, DEFAULT_GEMINI_MODEL } from './gemini';
 export { OPENAI_PROVIDER_ID, DEFAULT_OPENAI_MODEL } from './openai';
 export { CLAUDE_PROVIDER_ID, DEFAULT_CLAUDE_MODEL } from './claude';
 export { OLLAMA_PROVIDER_ID, DEFAULT_OLLAMA_MODEL, DEFAULT_OLLAMA_ENDPOINT } from './ollama';

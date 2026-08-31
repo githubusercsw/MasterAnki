@@ -22,11 +22,7 @@ function toGeminiSchema(schema: Record<string, unknown>): Schema {
   const s = schema as Record<string, unknown>;
   const type = (s.type as string) ?? 'object';
   const geminiType =
-    type === 'array'
-      ? SchemaType.ARRAY
-      : type === 'string'
-        ? SchemaType.STRING
-        : SchemaType.OBJECT;
+    type === 'array' ? SchemaType.ARRAY : type === 'string' ? SchemaType.STRING : SchemaType.OBJECT;
 
   const result: Record<string, unknown> = { type: geminiType };
   if (Array.isArray(s.required)) result.required = s.required as string[];
@@ -78,10 +74,7 @@ export class GeminiProvider implements LLMProvider {
     return { model: genAI.getGenerativeModel({ model: modelName }) };
   }
 
-  async generateContent(
-    prompt: string,
-    options: LLMGenerateOptions = {}
-  ): Promise<LLMResponse> {
+  async generateContent(prompt: string, options: LLMGenerateOptions = {}): Promise<LLMResponse> {
     const { model } = await this.buildClient();
 
     const generationConfig: Record<string, unknown> = {

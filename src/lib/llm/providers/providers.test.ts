@@ -149,15 +149,7 @@ describe('ClaudeProvider (tool_use)', () => {
 describe('统一注册入口', () => {
   it('PROVIDER_META 覆盖全部 7 个 Provider', () => {
     const ids = PROVIDER_META.map((m) => m.id);
-    expect(ids).toEqual([
-      'gemini',
-      'openai',
-      'claude',
-      'ollama',
-      'qwen',
-      'deepseek',
-      'kimi',
-    ]);
+    expect(ids).toEqual(['gemini', 'openai', 'claude', 'ollama', 'qwen', 'deepseek', 'kimi']);
   });
 
   it('buildAllProviders 返回 7 个实例且 id 唯一', () => {

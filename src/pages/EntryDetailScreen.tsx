@@ -70,9 +70,7 @@ const EntryDetailScreen: React.FC = () => {
       const res = await Inbox.getEntry({ id });
       setEntry(res.entry);
       // 按 sortOrder 升序展示（拖拽排序持久化后保持一致）
-      const sorted = [...(res.cards ?? [])].sort(
-        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-      );
+      const sorted = [...(res.cards ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       setCards(sorted);
       if (res.entry.deckName) setDeckName(res.entry.deckName);
       setMessage('');
@@ -180,9 +178,7 @@ const EntryDetailScreen: React.FC = () => {
   const confirmGate = async () => {
     try {
       if (!gateSummary) return;
-      const removedIds = gateSummary.removed
-        .map((c) => c.id)
-        .filter((cid): cid is string => !!cid);
+      const removedIds = gateSummary.removed.map((c) => c.id).filter((cid): cid is string => !!cid);
       await persistCards(
         pendingCards.map((c) => ({
           front: c.front,
@@ -195,9 +191,7 @@ const EntryDetailScreen: React.FC = () => {
         removedIds
       );
       const total =
-        gateSummary.added.length +
-        gateSummary.changed.length +
-        gateSummary.unchanged.length;
+        gateSummary.added.length + gateSummary.changed.length + gateSummary.unchanged.length;
       setMessage(
         t('entry.updated', {
           count: total,
@@ -374,14 +368,25 @@ const EntryDetailScreen: React.FC = () => {
 
             <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
               <IonButton expand="block" onClick={generate} disabled={generating || entry.isLocked}>
-                {generating ? <IonSpinner name="crescent" /> : (
+                {generating ? (
+                  <IonSpinner name="crescent" />
+                ) : (
                   <>
                     <IonIcon icon={sparklesOutline} slot="start" />
                     {cards.length > 0 ? t('entry.regenerate') : t('entry.generate')}
                   </>
                 )}
               </IonButton>
-              <IonButton expand="block" fill="outline" routerLink={`/template/${entry.id}`} disabled={!entry.extractedText && entry.contentType === 'text' ? false : !entry.extractedText}>
+              <IonButton
+                expand="block"
+                fill="outline"
+                routerLink={`/template/${entry.id}`}
+                disabled={
+                  !entry.extractedText && entry.contentType === 'text'
+                    ? false
+                    : !entry.extractedText
+                }
+              >
                 {t('entry.template')}
               </IonButton>
               {cards.length > 0 && (
@@ -414,7 +419,8 @@ const EntryDetailScreen: React.FC = () => {
                     fill="outline"
                     onClick={() => {
                       const pend = cards.filter((c) => c.status !== 'added');
-                      const allSelected = pend.length > 0 && pend.every((c) => selectedIds.has(c.id));
+                      const allSelected =
+                        pend.length > 0 && pend.every((c) => selectedIds.has(c.id));
                       if (allSelected) setSelectedIds(new Set());
                       else setSelectedIds(new Set(pend.map((c) => c.id)));
                     }}
@@ -529,7 +535,11 @@ const EntryDetailScreen: React.FC = () => {
             {/* 批量入库确认门：含失败清单 */}
             <ConfirmGate
               open={batchConfirmOpen || (batchResult !== null && batchResult.failureCount > 0)}
-              title={batchResult !== null && batchResult.failureCount > 0 ? t('entry.batchAddResultTitle') : t('entry.batchAddTitle')}
+              title={
+                batchResult !== null && batchResult.failureCount > 0
+                  ? t('entry.batchAddResultTitle')
+                  : t('entry.batchAddTitle')
+              }
               subtitle={
                 batchResult
                   ? t('entry.batchAddResultDesc', {
@@ -542,9 +552,7 @@ const EntryDetailScreen: React.FC = () => {
               }
               description={
                 batchResult && batchResult.failureCount > 0
-                  ? batchResult.failures
-                      .map((f) => `[${f.label}] ${f.error}`)
-                      .join('\n')
+                  ? batchResult.failures.map((f) => `[${f.label}] ${f.error}`).join('\n')
                   : undefined
               }
               confirmLabel={batchResult ? t('entry.batchResultOk') : t('common.confirmExecute')}

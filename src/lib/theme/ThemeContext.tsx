@@ -70,7 +70,9 @@ export const ThemeProvider: React.FC<{ ctx: PluginContext; children: React.React
     const onSystemChange = () => applyTheme('system');
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onSystemChange);
     return () => {
-      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', onSystemChange);
+      window
+        .matchMedia('(prefers-color-scheme: dark)')
+        .removeEventListener('change', onSystemChange);
     };
   }, [mode]);
 

@@ -86,10 +86,7 @@ const InboxScreen: React.FC = () => {
         id: crypto.randomUUID(),
         contentType: shared.mode === 'url' ? 'url' : 'text',
         content: shared.content,
-        preview:
-          shared.content.length > 120
-            ? shared.content.slice(0, 120) + '…'
-            : shared.content,
+        preview: shared.content.length > 120 ? shared.content.slice(0, 120) + '…' : shared.content,
         isLocked: false,
       };
       await Inbox.saveEntry({ entry });
@@ -232,7 +229,9 @@ const InboxScreen: React.FC = () => {
                 icon={selectedIds.size === entries.length ? checkmarkDoneOutline : checkmarkOutline}
                 slot="start"
               />
-              {selectedIds.size === entries.length ? t('common.deselectAll') : t('common.selectAll')}
+              {selectedIds.size === entries.length
+                ? t('common.deselectAll')
+                : t('common.selectAll')}
             </IonButton>
             <IonButton
               size="small"
@@ -328,9 +327,7 @@ const InboxScreen: React.FC = () => {
                       <h2>{entry.title ?? entry.preview}</h2>
                       <p>{entry.contentType.toUpperCase()}</p>
                     </IonLabel>
-                    <IonNote slot="end">
-                      {new Date(entry.createdAt).toLocaleDateString()}
-                    </IonNote>
+                    <IonNote slot="end">{new Date(entry.createdAt).toLocaleDateString()}</IonNote>
                   </IonItem>
                 );
               })}

@@ -150,11 +150,17 @@ const ManualCreateScreen: React.FC = () => {
 
         <IonItem>
           <IonLabel position="stacked">{t('create.deckName')}</IonLabel>
-          <IonInput value={deckName} onIonInput={(e) => setDeckName(String(e.detail.value ?? ''))} />
+          <IonInput
+            value={deckName}
+            onIonInput={(e) => setDeckName(String(e.detail.value ?? ''))}
+          />
         </IonItem>
 
         {message && (
-          <IonNote color={isSuccess ? 'success' : 'danger'} style={{ display: 'block', marginTop: '0.75rem' }}>
+          <IonNote
+            color={isSuccess ? 'success' : 'danger'}
+            style={{ display: 'block', marginTop: '0.75rem' }}
+          >
             {message}
           </IonNote>
         )}

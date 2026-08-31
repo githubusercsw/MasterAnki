@@ -20,11 +20,13 @@ const ja = {
   },
   inbox: {
     title: 'MasterAnki',
-    empty: 'エントリはまだありません。任意のアプリからテキスト・URL・PDFを共有するか、+ をタップして手動追加してください。',
+    empty:
+      'エントリはまだありません。任意のアプリからテキスト・URL・PDFを共有するか、+ をタップして手動追加してください。',
     manage: '一括管理',
     exporting: 'エクスポート中…',
     deleteTitle: '選択したエントリを削除',
-    deleteDesc: '選択した {{count}} 件のエントリとそのすべてのカードを削除しますか？この操作は取り消せません。',
+    deleteDesc:
+      '選択した {{count}} 件のエントリとそのすべてのカードを削除しますか？この操作は取り消せません。',
   },
   entry: {
     title: 'エントリ',
@@ -49,11 +51,13 @@ const ja = {
     deleteFailed: '削除に失敗',
     loadFailed: 'エントリの読み込みに失敗',
     persistOrderFailed: '並び順の保存に失敗',
-    extractionNeedsNative: 'URL/PDFの抽出にはネイティブ環境が必要です。内容を手動で貼り付けてください。',
+    extractionNeedsNative:
+      'URL/PDFの抽出にはネイティブ環境が必要です。内容を手動で貼り付けてください。',
     noText: '生成するテキストがありません。',
     generationFailed: '生成に失敗',
     incrementalTitle: '増分更新の確認',
-    incrementalSubtitle: 'このソースは既にカードを生成済みです。変更を確認してから書き込んでください（古いカードは置き換えられます）。',
+    incrementalSubtitle:
+      'このソースは既にカードを生成済みです。変更を確認してから書き込んでください（古いカードは置き換えられます）。',
     confirmUpdate: '更新する',
     batchAddTitle: '一括追加の確認',
     batchAddResultTitle: '一括追加の結果',
@@ -74,7 +78,8 @@ const ja = {
     model: 'モデル',
     endpoint: 'エンドポイント',
     customPrompts: 'カスタムプロンプト',
-    customPromptsNote: 'プロンプトのカスタマイズは今後のビルドで完全に接続されます。システム制約は自動的に付加されます。',
+    customPromptsNote:
+      'プロンプトのカスタマイズは今後のビルドで完全に接続されます。システム制約は自動的に付加されます。',
     saved: '設定を保存しました。',
     saveSettings: '設定を保存',
     clearKey: 'キーをクリア',

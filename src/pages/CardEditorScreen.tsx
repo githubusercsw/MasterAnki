@@ -120,18 +120,30 @@ const CardEditorScreen: React.FC = () => {
             <IonLabel position="stacked">
               {t('create.textWithCloze', { code: '{{c1::...}}' })}
             </IonLabel>
-            <IonTextarea value={front} rows={4} onIonInput={(e) => setFront(String(e.detail.value ?? ''))} />
+            <IonTextarea
+              value={front}
+              rows={4}
+              onIonInput={(e) => setFront(String(e.detail.value ?? ''))}
+            />
           </IonItem>
         ) : (
           <IonItem>
             <IonLabel position="stacked">{t('editor.front')}</IonLabel>
-            <IonTextarea value={front} rows={3} onIonInput={(e) => setFront(String(e.detail.value ?? ''))} />
+            <IonTextarea
+              value={front}
+              rows={3}
+              onIonInput={(e) => setFront(String(e.detail.value ?? ''))}
+            />
           </IonItem>
         )}
 
         <IonItem>
           <IonLabel position="stacked">{t('editor.back')}</IonLabel>
-          <IonTextarea value={back} rows={3} onIonInput={(e) => setBack(String(e.detail.value ?? ''))} />
+          <IonTextarea
+            value={back}
+            rows={3}
+            onIonInput={(e) => setBack(String(e.detail.value ?? ''))}
+          />
         </IonItem>
 
         <IonItem>
@@ -150,7 +162,13 @@ const CardEditorScreen: React.FC = () => {
                 </div>
               )}
               {back.trim() && (
-                <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--ma-border)', paddingTop: '0.5rem' }}>
+                <div
+                  style={{
+                    marginTop: '0.5rem',
+                    borderTop: '1px solid var(--ma-border)',
+                    paddingTop: '0.5rem',
+                  }}
+                >
                   <MarkdownRenderer content={back} compact />
                 </div>
               )}
@@ -159,7 +177,10 @@ const CardEditorScreen: React.FC = () => {
         )}
 
         {message && (
-          <IonNote color={isSuccess ? 'success' : 'danger'} style={{ display: 'block', marginTop: '0.75rem' }}>
+          <IonNote
+            color={isSuccess ? 'success' : 'danger'}
+            style={{ display: 'block', marginTop: '0.75rem' }}
+          >
             {message}
           </IonNote>
         )}

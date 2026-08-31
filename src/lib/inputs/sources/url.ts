@@ -29,7 +29,9 @@ export class UrlInputSource implements InputSource {
       };
     } catch {
       // 原生插件不可用（Web 开发环境），提示需要用户手动粘贴
-      throw new Error('URL extraction requires the native WebClipper. Paste content manually on web.');
+      throw new Error(
+        'URL extraction requires the native WebClipper. Paste content manually on web.'
+      );
     }
   }
 }

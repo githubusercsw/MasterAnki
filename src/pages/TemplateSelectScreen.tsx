@@ -33,7 +33,12 @@ interface TemplateOption {
 
 const TEMPLATES: TemplateOption[] = [
   { type: 'basic', icon: documentTextOutline, descKey: 'template.basicDesc', requiresIO: false },
-  { type: 'cloze', icon: ellipsisHorizontalOutline, descKey: 'template.clozeDesc', requiresIO: false },
+  {
+    type: 'cloze',
+    icon: ellipsisHorizontalOutline,
+    descKey: 'template.clozeDesc',
+    requiresIO: false,
+  },
   { type: 'image_occlusion', icon: imageOutline, descKey: 'template.ioDesc', requiresIO: true },
 ];
 

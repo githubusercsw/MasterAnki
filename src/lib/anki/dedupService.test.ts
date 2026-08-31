@@ -33,9 +33,7 @@ describe('checkDuplicateSource（哈希级同源查重）', () => {
   it('相同内容哈希命中已有条目', async () => {
     const content = 'Anki is a spaced repetition software.';
     const hash = await computeSourceHash(content);
-    const existing: ExistingEntryRef[] = [
-      { id: 'a', sourceHash: hash, createdAt: 1 },
-    ];
+    const existing: ExistingEntryRef[] = [{ id: 'a', sourceHash: hash, createdAt: 1 }];
     const res = await checkDuplicateSource(content, existing);
     expect(res.isDuplicate).toBe(true);
     expect(res.matchedEntry?.id).toBe('a');
@@ -43,9 +41,7 @@ describe('checkDuplicateSource（哈希级同源查重）', () => {
   });
 
   it('不同内容不判为重复', async () => {
-    const existing: ExistingEntryRef[] = [
-      { id: 'a', sourceHash: 'abc123', createdAt: 1 },
-    ];
+    const existing: ExistingEntryRef[] = [{ id: 'a', sourceHash: 'abc123', createdAt: 1 }];
     const res = await checkDuplicateSource('totally different content', existing);
     expect(res.isDuplicate).toBe(false);
     expect(res.matchedEntry).toBeUndefined();

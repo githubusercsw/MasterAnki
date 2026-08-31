@@ -10,14 +10,7 @@
 
 export type CardType = 'basic' | 'cloze' | 'image_occlusion';
 
-export type ContentType =
-  | 'text'
-  | 'url'
-  | 'pdf'
-  | 'voice'
-  | 'image'
-  | 'youtube'
-  | 'epub';
+export type ContentType = 'text' | 'url' | 'pdf' | 'voice' | 'image' | 'youtube' | 'epub';
 
 export type CardStatus = 'pending' | 'added' | 'error';
 

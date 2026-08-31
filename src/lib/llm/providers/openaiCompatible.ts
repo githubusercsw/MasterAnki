@@ -85,7 +85,9 @@ export class OpenAICompatibleProvider implements LLMProvider {
     const apiKey = (await this.getSetting(KEYS.apiKey(this.id))) ?? '';
     const model = (await this.getSetting(KEYS.model(this.id))) || this.opts.defaultModel;
     const endpoint =
-      (await this.getSetting(KEYS.endpoint(this.id))) || this.opts.defaultEndpoint || this.opts.baseUrl;
+      (await this.getSetting(KEYS.endpoint(this.id))) ||
+      this.opts.defaultEndpoint ||
+      this.opts.baseUrl;
     if (this.opts.requiresApiKey !== false && !apiKey) {
       throw new Error(
         `${this.displayName} API Key not configured. Please set your API key in Settings.`
@@ -94,10 +96,7 @@ export class OpenAICompatibleProvider implements LLMProvider {
     return { apiKey, model, endpoint };
   }
 
-  async generateContent(
-    prompt: string,
-    options: LLMGenerateOptions = {}
-  ): Promise<LLMResponse> {
+  async generateContent(prompt: string, options: LLMGenerateOptions = {}): Promise<LLMResponse> {
     const { apiKey, model, endpoint } = await this.resolveConfig();
 
     const body: ChatCompletionRequest = {
@@ -131,7 +130,10 @@ export class OpenAICompatibleProvider implements LLMProvider {
         finishReason:
           finishReason === 'length' ? 'max_tokens' : finishReason === 'stop' ? 'stop' : 'stop',
         usage: data.usage
-          ? { inputTokens: data.usage.prompt_tokens ?? 0, outputTokens: data.usage.completion_tokens ?? 0 }
+          ? {
+              inputTokens: data.usage.prompt_tokens ?? 0,
+              outputTokens: data.usage.completion_tokens ?? 0,
+            }
           : undefined,
       };
     } catch (e) {
