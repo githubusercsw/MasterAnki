@@ -47,6 +47,11 @@ describe('Log Web 降级', () => {
 });
 
 describe('AnkiDroid Web 降级', () => {
+  it('getDecks 返回内置默认牌组（MasterAnki）', async () => {
+    const res = await webAnkiDroid.getDecks();
+    expect(res.decks).toEqual([{ id: 1, name: 'MasterAnki' }]);
+  });
+
   it('checkDependency 返回不可用（用于 UI 门禁）', async () => {
     const res = await webAnkiDroid.checkDependency({ depId: 'ankidroid.ioenhanced' });
     expect(res.available).toBe(false);
