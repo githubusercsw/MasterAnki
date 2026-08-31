@@ -17,12 +17,17 @@ import {
   IonCard,
   IonCardContent,
   IonSpinner,
+  IonSelect,
+  IonSelectOption,
+  IonInput,
+  IonButton,
 } from '@ionic/react';
 import { useTranslation } from 'react-i18next';
 import { documentTextOutline, ellipsisHorizontalOutline, imageOutline } from 'ionicons/icons';
-import AnkiDroid, { type AnkiModelInfo } from '../plugins/AnkiDroid';
+import AnkiDroid, { type AnkiModelInfo, type AnkiDeckInfo } from '../plugins/AnkiDroid';
 import { isImageOcclusionAvailable } from '../lib/anki/ioDependency';
 import { getSelectedAnkiModel, setSelectedAnkiModel } from '../lib/anki/modelSelection';
+import { getSelectedAnkiDeck, setSelectedAnkiDeck } from '../lib/anki/deckSelection';
 
 /**
  * 卡片模板选择页
@@ -39,17 +44,31 @@ const TemplateSelectScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [ioAvailable, setIoAvailable] = useState<boolean | null>(null);
+  // 牌组联动：真实牌组列表 + 当前所选 + 是否新建自定义
+  const [realDecks, setRealDecks] = useState<AnkiDeckInfo[]>([]);
+  const [deckName, setDeckName] = useState('MasterAnki');
+  const [useCustomDeck, setUseCustomDeck] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const current = await getSelectedAnkiModel();
+      const [current, currentDeck] = await Promise.all([
+        getSelectedAnkiModel(),
+        getSelectedAnkiDeck(),
+      ]);
       if (!cancelled) setSelectedModel(current);
-      // 尝试读取 AnkiDroid 真实模板
+      if (!cancelled && currentDeck) setDeckName(currentDeck);
+      // 尝试读取 AnkiDroid 真实模板 + 牌组
       try {
-        const res = await AnkiDroid.getModels();
-        if (!cancelled && res.models && res.models.length > 0) {
-          setRealModels(res.models);
+        const [modelRes, deckRes] = await Promise.all([
+          AnkiDroid.getModels(),
+          AnkiDroid.getDecks(),
+        ]);
+        if (!cancelled && modelRes.models && modelRes.models.length > 0) {
+          setRealModels(modelRes.models);
+        }
+        if (!cancelled && deckRes.decks && deckRes.decks.length > 0) {
+          setRealDecks(deckRes.decks);
         }
       } catch {
         // API 不可用 → 保持 null（回退内置）
@@ -62,6 +81,22 @@ const TemplateSelectScreen: React.FC = () => {
     };
   }, []);
 
+  // 派生判断：当前 deckName 是否匹配真实牌组列表
+  const showDeckSelector =
+    !useCustomDeck && realDecks.length > 0 && realDecks.some((d) => d.name === deckName);
+
+  /** 选择真实牌组：持久化 */
+  const pickRealDeck = async (name: string) => {
+    await setSelectedAnkiDeck(name);
+    setDeckName(name);
+    setUseCustomDeck(false);
+  };
+
+  /** 新建自定义牌组 */
+  const pickCustomDeck = () => {
+    setUseCustomDeck(true);
+  };
+
   useEffect(() => {
     void isImageOcclusionAvailable().then(setIoAvailable);
   }, []);
@@ -69,12 +104,14 @@ const TemplateSelectScreen: React.FC = () => {
   /** 选中一个真实模板：持久化并返回条目页 */
   const pickRealModel = async (m: AnkiModelInfo) => {
     await setSelectedAnkiModel(m.name);
+    await setSelectedAnkiDeck(deckName);
     history.replace(`/entry/${entryId}`);
   };
 
   /** 回退内置模板 */
   const pickBuiltin = async (name: string) => {
     await setSelectedAnkiModel(name);
+    await setSelectedAnkiDeck(deckName);
     history.replace(`/entry/${entryId}`);
   };
 
@@ -105,6 +142,38 @@ const TemplateSelectScreen: React.FC = () => {
           <h2>{t('template.choose')}</h2>
           <p>{t('template.desc')}</p>
         </IonText>
+
+        {/* 牌组联动：选模板前先选牌组（读真实列表/可新建） */}
+        <IonCard style={{ marginTop: '1rem' }}>
+          <IonCardContent>
+            <IonItem lines="none" style={{ paddingLeft: 0 }}>
+              <IonLabel position="stacked">{t('entry.deckName')}</IonLabel>
+              {showDeckSelector ? (
+                <IonSelect
+                  value={deckName}
+                  onIonChange={(e) => void pickRealDeck(String(e.detail.value))}
+                  placeholder={t('entry.chooseDeck')}
+                >
+                  {realDecks.map((d) => (
+                    <IonSelectOption key={d.id} value={d.name}>
+                      {d.name}
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+              ) : (
+                <IonInput
+                  value={deckName}
+                  onIonInput={(e) => setDeckName(String(e.detail.value ?? ''))}
+                />
+              )}
+              {showDeckSelector && (
+                <IonButton size="small" fill="clear" slot="end" onClick={pickCustomDeck}>
+                  {t('entry.newDeck')}
+                </IonButton>
+              )}
+            </IonItem>
+          </IonCardContent>
+        </IonCard>
 
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
