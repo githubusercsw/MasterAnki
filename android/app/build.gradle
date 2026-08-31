@@ -41,7 +41,9 @@ dependencies {
     implementation 'com.github.ankidroid:Anki-Android:api-v1.1.0'
 
     // Room 数据库
-    def room_version = "2.6.1"
+    // 2.7+ 升级原因：Room 2.6.1 内嵌 kotlinx-metadata-jvm 仅支持到 2.0.0，
+    // 而 Capacitor 8 插件由 Kotlin 2.1 编译（metadata 2.1.0）→ compileDebugJavaWithJavac 崩溃。
+    def room_version = "2.8.4"
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
 
