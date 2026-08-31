@@ -21,7 +21,9 @@ import {
 } from '@ionic/react';
 import { useTranslation } from 'react-i18next';
 import Inbox from '../plugins/Inbox';
-import type { CardType } from '../lib/anki/types';
+import AnkiDroid from '../plugins/AnkiDroid';
+import { buildAnkiNote } from '../lib/anki/noteBuilder';
+import type { CardType, Flashcard } from '../lib/anki/types';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 
 const CardEditorScreen: React.FC = () => {
@@ -36,17 +38,24 @@ const CardEditorScreen: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  // 同步 AnkiDroid 所需：原始卡片（保留 cloze/imageUrl）、noteId、牌组名
+  const [card, setCard] = useState<Flashcard | null>(null);
+  const [noteId, setNoteId] = useState<number | undefined>(undefined);
+  const [deckName, setDeckName] = useState('MasterAnki');
 
   useEffect(() => {
     (async () => {
       try {
         const res = await Inbox.getEntry({ id });
+        if (res.entry.deckName) setDeckName(res.entry.deckName);
         const target = (res.cards ?? []).find((c) => c.id === cardId);
         if (target) {
+          setCard(target);
           setFront(target.front);
           setBack(target.back);
           setTags((target.tags ?? []).join(', '));
           setType(target.type);
+          setNoteId(target.noteId);
         }
       } catch {
         setIsSuccess(false);
@@ -67,16 +76,43 @@ const CardEditorScreen: React.FC = () => {
     setIsSuccess(false);
     setMessage('');
     try {
+      const parsedTags = tags.split(/[,，\s]+/).filter(Boolean);
+      // 1. 更新本地副本
       await Inbox.updateCardContent({
         cardId,
         front,
         back,
         type,
-        tags: tags.split(/[,，\s]+/).filter(Boolean),
+        cloze: type === 'cloze' ? front : undefined,
+        tags: parsedTags,
       });
-      setIsSuccess(true);
-      setMessage(t('editor.updated'));
-      setTimeout(() => history.goBack(), 800);
+
+      // 2. 已入库（有 noteId）→ 同步 AnkiDroid 远端笔记
+      if (noteId && card) {
+        const updated: Flashcard = {
+          ...card,
+          front,
+          back,
+          type,
+          tags: parsedTags,
+          cloze: type === 'cloze' ? front : card.cloze,
+        };
+        const note = await buildAnkiNote(updated, deckName);
+        try {
+          await AnkiDroid.updateNote({ noteId, note });
+          setIsSuccess(true);
+          setMessage(t('editor.updatedSynced'));
+        } catch {
+          // 远端同步失败：本地已更新，标记 error 并在 UI 提示
+          await Inbox.updateCardStatus({ cardId, status: 'error' });
+          setIsSuccess(false);
+          setMessage(t('editor.syncFailed'));
+        }
+      } else {
+        setIsSuccess(true);
+        setMessage(t('editor.updated'));
+      }
+      setTimeout(() => history.goBack(), 1200);
     } catch (e) {
       setIsSuccess(false);
       setMessage(e instanceof Error ? e.message : t('editor.saveFailed'));

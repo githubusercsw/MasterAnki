@@ -34,9 +34,8 @@ import {
 import Inbox from '../plugins/Inbox';
 import AnkiDroid, { type AnkiDeckInfo } from '../plugins/AnkiDroid';
 import { MODELS } from '../lib/anki/ankidroid';
-import { getSelectedAnkiModel } from '../lib/anki/modelSelection';
 import { getSelectedAnkiDeck, setSelectedAnkiDeck } from '../lib/anki/deckSelection';
-import { findModelByName, mapFieldsToModel } from '../lib/anki/resolveModel';
+import { buildAnkiNote } from '../lib/anki/noteBuilder';
 import type { InboxEntry, Flashcard } from '../lib/anki/types';
 import { computeSourceHash } from '../lib/anki/dedup';
 import { buildChangeSummary, hasChanges } from '../lib/anki/dedupService';
@@ -269,51 +268,15 @@ const EntryDetailScreen: React.FC = () => {
   /** 构建单卡入库任务（供单卡与批量复用） */
   const buildAddTask = (card: Flashcard) => {
     return async (): Promise<void> => {
-      // 模型名：优先用户所选 AnkiDroid 真实模板，否则按卡片类型内置映射
-      const builtin = MODELS[card.type];
-      const selectedModelName = await getSelectedAnkiModel();
-      const modelKey = selectedModelName || builtin.key;
-
-      // canonical 字段（按卡片类型语义）
-      const canonical: Record<string, string> = {};
-      canonical.Front = card.front;
-      canonical.Back = card.back;
-      if (card.type === 'cloze') {
-        canonical.Text = card.cloze ?? card.front;
-        canonical.Extra = card.back ?? '';
-      }
-      if (card.type === 'image_occlusion') {
-        canonical.Image = card.imageUrl ?? '';
-        canonical.Occlusion = '';
-        canonical.Remarks = card.back ?? '';
-      }
-
-      let fields: Record<string, string> = canonical;
-      if (selectedModelName) {
-        // 用户选了真实模板：以其字段名为准映射
-        const realModel = await findModelByName(selectedModelName);
-        fields = mapFieldsToModel(realModel, canonical, {
-          front: card.front,
-          back: card.back,
-          clozeText: card.cloze ?? card.front,
-          imageUrl: card.imageUrl,
-        });
-      }
-
+      // 构建 note（模型解析 + 字段映射，见 noteBuilder）
+      const note = await buildAnkiNote(card, deckName);
       // 确保模型存在（原生 resolveModel 会优先精确匹配真实模型名）
       await AnkiDroid.ensureModel({
-        modelKey,
-        fields: Object.keys(fields),
-        templates: builtin.templates,
+        modelKey: note.modelKey,
+        fields: Object.keys(note.fields),
+        templates: MODELS[card.type].templates,
       });
-      const result = await AnkiDroid.addNote({
-        note: {
-          deckName: deckName || 'MasterAnki',
-          modelKey,
-          fields,
-          tags: card.tags,
-        },
-      });
+      const result = await AnkiDroid.addNote({ note });
       await Inbox.updateCardStatus({ cardId: card.id, status: 'added', noteId: result.noteId });
     };
   };
