@@ -34,10 +34,7 @@ export function buildCanonicalFields(card: Flashcard): Record<string, string> {
  * 构建 AnkiNote（含模型解析 + 字段映射）。
  * deckName 由调用方传入（条目/用户所选/默认）。
  */
-export async function buildAnkiNote(
-  card: Flashcard,
-  deckName: string
-): Promise<AnkiNote> {
+export async function buildAnkiNote(card: Flashcard, deckName: string): Promise<AnkiNote> {
   const builtin = MODELS[card.type];
   const selectedModelName = await getSelectedAnkiModel();
   const modelKey = selectedModelName || builtin.key;

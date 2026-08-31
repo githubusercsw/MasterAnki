@@ -137,7 +137,8 @@ const en = {
     required: 'Front and back are required.',
     updated: 'Card updated.',
     updatedSynced: 'Card updated and synced to AnkiDroid.',
-    syncFailed: 'Updated locally, but failed to sync AnkiDroid. Check if the AnkiDroid API is enabled.',
+    syncFailed:
+      'Updated locally, but failed to sync AnkiDroid. Check if the AnkiDroid API is enabled.',
     saveFailed: 'Failed to save card',
     loadFailed: 'Failed to load card',
     saveChanges: 'Save Changes',

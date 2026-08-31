@@ -139,7 +139,8 @@ const ja = {
     required: '表面と裏面は必須です。',
     updated: 'カードを更新しました。',
     updatedSynced: 'カードを更新し、AnkiDroid に同期しました。',
-    syncFailed: 'ローカルは更新しましたが、AnkiDroid への同期に失敗しました。API が有効か確認してください。',
+    syncFailed:
+      'ローカルは更新しましたが、AnkiDroid への同期に失敗しました。API が有効か確認してください。',
     saveFailed: 'カードの保存に失敗',
     loadFailed: 'カードの読み込みに失敗',
     saveChanges: '変更を保存',

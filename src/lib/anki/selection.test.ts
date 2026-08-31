@@ -48,16 +48,8 @@ vi.mock('../../plugins/AnkiDroid', () => {
 });
 
 import Settings from '../../plugins/Settings';
-import {
-  ANKI_DECK_KEY,
-  getSelectedAnkiDeck,
-  setSelectedAnkiDeck,
-} from './deckSelection';
-import {
-  ANKI_MODEL_KEY,
-  getSelectedAnkiModel,
-  setSelectedAnkiModel,
-} from './modelSelection';
+import { ANKI_DECK_KEY, getSelectedAnkiDeck, setSelectedAnkiDeck } from './deckSelection';
+import { ANKI_MODEL_KEY, getSelectedAnkiModel, setSelectedAnkiModel } from './modelSelection';
 import { mapFieldsToModel, findModelByName } from './resolveModel';
 
 beforeEach(() => {
@@ -97,11 +89,7 @@ describe('modelSelection', () => {
 
 describe('mapFieldsToModel', () => {
   it('无模型时回退 canonical 字段', () => {
-    const out = mapFieldsToModel(
-      null,
-      { Front: 'Q', Back: 'A' },
-      { front: 'Q', back: 'A' }
-    );
+    const out = mapFieldsToModel(null, { Front: 'Q', Back: 'A' }, { front: 'Q', back: 'A' });
     expect(out).toEqual({ Front: 'Q', Back: 'A' });
   });
 
@@ -120,11 +108,7 @@ describe('mapFieldsToModel', () => {
 
   it('移除 canonical 中模型不存在的字段', () => {
     const model = { id: 2, name: '自定义模板', fields: ['Question'] };
-    const out = mapFieldsToModel(
-      model,
-      { Front: 'Q', Back: 'A' },
-      { front: 'Q', back: 'A' }
-    );
+    const out = mapFieldsToModel(model, { Front: 'Q', Back: 'A' }, { front: 'Q', back: 'A' });
     expect(out).not.toHaveProperty('Back');
     expect(out['Question']).toBe('Q');
   });
