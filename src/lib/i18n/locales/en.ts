@@ -40,6 +40,8 @@ const en = {
     addAllToolbar: 'Add all',
     noPending: 'No pending cards to add.',
     add: 'Add',
+    retry: 'Retry',
+    errorStatus: 'Failed to add, retryable',
     added: 'Added to AnkiDroid',
     addFailed: 'Failed to add card',
     generated: 'Generated {{count}} cards.',

@@ -40,6 +40,8 @@ const zh = {
     addAllToolbar: '全部入库',
     noPending: '没有待入库的卡片。',
     add: '入库',
+    retry: '重试',
+    errorStatus: '入库失败，可重试',
     added: '已加入 AnkiDroid',
     addFailed: '入库失败',
     generated: '已生成 {{count}} 张卡片。',

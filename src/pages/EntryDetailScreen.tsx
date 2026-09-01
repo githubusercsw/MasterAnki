@@ -30,6 +30,7 @@ import {
   checkmarkCircleOutline,
   createOutline,
   refreshOutline,
+  warningOutline,
 } from 'ionicons/icons';
 import Inbox from '../plugins/Inbox';
 import AnkiDroid from '../plugins/AnkiDroid';
@@ -274,7 +275,15 @@ const EntryDetailScreen: React.FC = () => {
         pending.map((c) => ({
           id: c.id,
           label: c.front.slice(0, 40),
-          run: buildAddTask(c),
+          // 批量失败与单卡路径一致：置 error 后再抛给 runBatch 收集失败清单
+          run: async () => {
+            try {
+              await buildAddTask(c)();
+            } catch (e) {
+              await Inbox.updateCardStatus({ cardId: c.id, status: 'error' });
+              throw e;
+            }
+          },
         }))
       );
       setBatchResult(result);
@@ -502,6 +511,11 @@ const EntryDetailScreen: React.FC = () => {
                           <MarkdownRenderer content={card.front} compact />
                           <MarkdownRenderer content={card.back} compact />
                           <IonNote>{card.type}</IonNote>
+                          {card.status === 'error' && (
+                            <IonNote color="danger">
+                              <IonIcon icon={warningOutline} /> {t('entry.errorStatus')}
+                            </IonNote>
+                          )}
                         </IonLabel>
                         {card.status === 'added' ? (
                           <IonIcon icon={checkmarkCircleOutline} slot="end" color="success" />
@@ -509,10 +523,11 @@ const EntryDetailScreen: React.FC = () => {
                           <IonButton
                             slot="end"
                             size="small"
+                            color={card.status === 'error' ? 'danger' : undefined}
                             onClick={() => addCardToAnki(card)}
                             disabled={adding}
                           >
-                            {t('entry.add')}
+                            {card.status === 'error' ? t('entry.retry') : t('entry.add')}
                           </IonButton>
                         )}
                         <IonButton

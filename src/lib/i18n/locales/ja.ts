@@ -42,6 +42,8 @@ const ja = {
     addAllToolbar: 'すべて追加',
     noPending: '追加待ちのカードはありません。',
     add: '追加',
+    retry: '再試行',
+    errorStatus: '追加に失敗、再試行可能',
     added: 'AnkiDroid に追加しました',
     addFailed: 'カードの追加に失敗',
     generated: '{{count}} 枚のカードを生成しました。',
