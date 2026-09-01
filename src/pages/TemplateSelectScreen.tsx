@@ -24,10 +24,11 @@ import {
 } from '@ionic/react';
 import { useTranslation } from 'react-i18next';
 import { documentTextOutline, ellipsisHorizontalOutline, imageOutline } from 'ionicons/icons';
-import AnkiDroid, { type AnkiModelInfo, type AnkiDeckInfo } from '../plugins/AnkiDroid';
+import AnkiDroid, { type AnkiModelInfo } from '../plugins/AnkiDroid';
 import { isImageOcclusionAvailable } from '../lib/anki/ioDependency';
 import { getSelectedAnkiModel, setSelectedAnkiModel } from '../lib/anki/modelSelection';
-import { getSelectedAnkiDeck, setSelectedAnkiDeck } from '../lib/anki/deckSelection';
+import { setSelectedAnkiDeck } from '../lib/anki/deckSelection';
+import { useDeckSelector } from '../lib/anki/useDeckSelector';
 
 /**
  * 卡片模板选择页
@@ -44,31 +45,21 @@ const TemplateSelectScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [ioAvailable, setIoAvailable] = useState<boolean | null>(null);
-  // 牌组联动：真实牌组列表 + 当前所选 + 是否新建自定义
-  const [realDecks, setRealDecks] = useState<AnkiDeckInfo[]>([]);
-  const [deckName, setDeckName] = useState('MasterAnki');
-  const [useCustomDeck, setUseCustomDeck] = useState(false);
+
+  // 牌组联动（真实列表 + 可新建，跨页面共享状态机）
+  const { deckName, setDeckName, realDecks, showDeckSelector, pickRealDeck, pickCustomDeck } =
+    useDeckSelector();
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [current, currentDeck] = await Promise.all([
-        getSelectedAnkiModel(),
-        getSelectedAnkiDeck(),
-      ]);
+      const current = await getSelectedAnkiModel();
       if (!cancelled) setSelectedModel(current);
-      if (!cancelled && currentDeck) setDeckName(currentDeck);
-      // 尝试读取 AnkiDroid 真实模板 + 牌组
+      // 尝试读取 AnkiDroid 真实模板
       try {
-        const [modelRes, deckRes] = await Promise.all([
-          AnkiDroid.getModels(),
-          AnkiDroid.getDecks(),
-        ]);
-        if (!cancelled && modelRes.models && modelRes.models.length > 0) {
-          setRealModels(modelRes.models);
-        }
-        if (!cancelled && deckRes.decks && deckRes.decks.length > 0) {
-          setRealDecks(deckRes.decks);
+        const res = await AnkiDroid.getModels();
+        if (!cancelled && res.models && res.models.length > 0) {
+          setRealModels(res.models);
         }
       } catch {
         // API 不可用 → 保持 null（回退内置）
@@ -80,22 +71,6 @@ const TemplateSelectScreen: React.FC = () => {
       cancelled = true;
     };
   }, []);
-
-  // 派生判断：当前 deckName 是否匹配真实牌组列表
-  const showDeckSelector =
-    !useCustomDeck && realDecks.length > 0 && realDecks.some((d) => d.name === deckName);
-
-  /** 选择真实牌组：持久化 */
-  const pickRealDeck = async (name: string) => {
-    await setSelectedAnkiDeck(name);
-    setDeckName(name);
-    setUseCustomDeck(false);
-  };
-
-  /** 新建自定义牌组 */
-  const pickCustomDeck = () => {
-    setUseCustomDeck(true);
-  };
 
   useEffect(() => {
     void isImageOcclusionAvailable().then(setIoAvailable);
