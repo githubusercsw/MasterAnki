@@ -10,6 +10,7 @@
 import { MODELS } from './ankidroid';
 import { getSelectedAnkiModel } from './modelSelection';
 import { findModelByName, mapFieldsToModel } from './resolveModel';
+import { getActiveProviderId } from '../settings/secureStorage';
 import type { Flashcard, AnkiNote } from './types';
 
 /** 按卡片类型构建 canonical 字段（Basic/Cloze/IO 语义） */
@@ -53,10 +54,19 @@ export async function buildAnkiNote(card: Flashcard, deckName: string): Promise<
     });
   }
 
+  // 记录生成 Provider（统计维度；获取失败静默为 null）
+  let providerId: string | null = null;
+  try {
+    providerId = await getActiveProviderId();
+  } catch {
+    providerId = null;
+  }
+
   return {
     deckName: deckName || 'MasterAnki',
     modelKey,
     fields,
     tags: card.tags,
+    providerId,
   };
 }

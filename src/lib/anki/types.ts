@@ -77,6 +77,8 @@ export interface AnkiNote {
   modelKey: string;
   fields: Record<string, string>;
   tags?: string[];
+  /** 生成该卡片的 LLM Provider（Phase 4 按 Provider 维度统计） */
+  providerId?: string | null;
 }
 
 /** 事实（三步管线中间产物） */

@@ -16,6 +16,7 @@ interface StatsEventRow {
   type: string;
   count: number;
   sourceType: string;
+  providerId: string;
   createdAt: number;
 }
 
@@ -52,9 +53,15 @@ function readStats(): StatsEventRow[] {
   return read<StatsEventRow[]>(KEY_STATS, []);
 }
 
-function recordStat(type: string, count: number, sourceType?: string): void {
+function recordStat(type: string, count: number, sourceType?: string, providerId?: string): void {
   const stats = readStats();
-  stats.push({ type, count, sourceType: sourceType ?? '', createdAt: Date.now() });
+  stats.push({
+    type,
+    count,
+    sourceType: sourceType ?? '',
+    providerId: providerId ?? '',
+    createdAt: Date.now(),
+  });
   write(KEY_STATS, stats);
 }
 
@@ -197,6 +204,7 @@ export const webInbox: InboxPlugin = {
         type: s.type,
         count: s.count,
         sourceType: s.sourceType,
+        providerId: s.providerId,
         createdAt: s.createdAt,
       }));
     return { events };

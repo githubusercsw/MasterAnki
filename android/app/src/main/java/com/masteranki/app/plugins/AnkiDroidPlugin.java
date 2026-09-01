@@ -219,8 +219,9 @@ public class AnkiDroidPlugin extends Plugin {
             }
 
             Long noteId = api.addNote(modelId, deckId, fields, tags);
-            // 统计埋点：card_added（入库成功）
-            recordStats("card_added", 1, null, null);
+            // 统计埋点：card_added 带 Provider（前端经 note.providerId 传入，供 Phase 4 按 Provider 维度分析）
+            String providerId = note.optString("providerId", null);
+            recordStats("card_added", 1, null, providerId);
             JSObject ret = new JSObject();
             ret.put("noteId", noteId != null ? noteId.longValue() : JSONObject.NULL);
             call.resolve(ret);
