@@ -3,7 +3,7 @@
  *
  * 消除 EntryDetail / ManualCreate / TemplateSelect 三处重复实现：
  * - 加载 AnkiDroid 真实牌组列表（getDecks）
- * - 管理 deckName / useCustomDeck / showDeckSelector 派生判断
+ * - 管理 deckName / useCustomDeck / showDeckSelector 派生判断（展示选择器仅取决于 API 可读 + 未切自定义）
  * - 选择真实牌组（持久化 + 可选回调）/ 切到新建自定义
  *
  * 兼容性：不改变任何插件接口；行为与三页现状完全一致。
@@ -29,7 +29,7 @@ export interface DeckSelector {
   realDecks: AnkiDeckInfo[];
   /** 牌组列表加载中 */
   decksLoading: boolean;
-  /** 是否展示选择器（deckName 匹配真实列表且未切自定义） */
+  /** 是否展示选择器（API 可读取真实牌组且未切自定义） */
   showDeckSelector: boolean;
   /** 选择真实牌组：持久化 + 可选回调 */
   pickRealDeck: (name: string) => Promise<void>;
@@ -78,9 +78,10 @@ export function useDeckSelector(opts: UseDeckSelectorOptions = {}): DeckSelector
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialDeckName]);
 
-  // 派生判断：deckName 匹配真实列表且未切自定义 → 展示选择器
-  const showDeckSelector =
-    !useCustomDeck && realDecks.length > 0 && realDecks.some((d) => d.name === deckName);
+  // 派生判断：仅取决于 API 可读取真实牌组 + 未切自定义；
+  // 不再耦合 deckName 与真实列表的匹配结果，保证「新建牌组」入口独立可见，
+  // 与卡片类型选择器（数据可获取即渲染下拉）行为一致。
+  const showDeckSelector = !useCustomDeck && realDecks.length > 0;
 
   const pickRealDeck = async (name: string) => {
     await setSelectedAnkiDeck(name);
