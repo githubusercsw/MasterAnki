@@ -57,6 +57,17 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
   - [x] 3.6-4 统计埋点（022714a）：AnkiDroidPlugin addNote→card_added、ShareReceiverPlugin→source_shared，card_generated 原已有
   - [x] 3.6-5 补单测（6162e35）：selection.test.ts 10 项 + webFallbacks getDecks，全量 52→63
   - [x] 3.6-6 质量门禁（2a3714c 修 format）+ tag v0.3.0 原生编译验证 ✅（APK 已发布）
+- [x] **Phase 3.7 逻辑/UI 优化（第一版串行任务 3，方案见 docs/phase37-ux-logic-plan.md）**：
+  - [x] 3.7-1（be286c0）：useDeckSelector hook 三页牌组状态机合并（注：hook 内 import 路径曾错为 ../plugins，修正 ../../plugins）
+  - [x] 3.7-2（f02d8bd）：批量失败置 error（runBatch 任务包装 catch+置 error 后 rethrow；error 卡片警示+重试）
+  - [x] 3.7-3（5dc48b4）：useToast.tsx 统一反馈（success/error/info，2.5s/4s/3s 自动消失）+ 批量进度条（注：useToast.ts 含 JSX 须 .tsx）
+  - [x] 3.7-4（676ecaa）：CardListItem 纯展示组件抽取（按方案降级仅抽 1 个，其余留 Phase 4）
+  - [x] CI 修复（61f9d1b）：useToast.test.tsx 补 onDidDismiss 类型（本地 tsc -b 增量缓存漏检 → --force 重建）
+- [x] **Phase 3.8 架构审视（第二版串行任务 3，方案见 docs/phase38-architecture-review.md）**：
+  - [x] 3.8-1（085a7be）统计维度修复：saveCards 埋 sourceType=entry.contentType；addNote 埋 providerId；AnkiNote 增 providerId 字段+noteBuilder 用 getActiveProviderId() 填充；原生/web getStats 对齐
+  - [x] 3.8-3（52427eb）冒烟清单：docs/smoke-checklist.md（v0.3.1，A-H 分组逐项打勾）
+  - [x] 3.8-2 打 tag v0.3.1：APK 构建 success（run 33468182132），Release v0.3.1 已发布，MasterAnki-v0.3.1.apk（5.93MB）
+  - [ ] 3.8-4 Phase 4 启动前置：**待用户真机冒烟通过**（A-E 全过→统计维度达标→启动 Phase 4）
 - [ ] Phase 4 学习统计仪表盘（StatsEvent 采集已就绪，仪表盘 UI 待做）
 
 ## 六、关键约定 / 教训
