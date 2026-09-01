@@ -17,6 +17,7 @@ function toastProps(hook: ReturnType<typeof renderHook<ReturnType<typeof useToas
       message?: string;
       duration?: number;
       color?: string;
+      onDidDismiss?: () => void;
     }>
   ).props;
 }
