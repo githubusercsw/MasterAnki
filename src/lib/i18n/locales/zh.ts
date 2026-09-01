@@ -49,6 +49,8 @@ const zh = {
     updated: '已更新 {{count}} 张卡片（新增 {{added}}，变更 {{changed}}）。',
     updateFailed: '更新失败',
     batchAdded: '已向 AnkiDroid 添加 {{count}} 张卡片。',
+    batchAddPartial: '批量入库：成功 {{success}} 张，失败 {{failed}} 张，详见失败清单。',
+    batchProgress: '正在入库 {{done}}/{{total}}…',
     batchFailed: '批量入库失败',
     deletedCards: '已删除 {{count}} 张卡片。',
     deleteFailed: '删除失败',

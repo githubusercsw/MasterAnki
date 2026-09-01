@@ -24,6 +24,7 @@ import {
   IonIcon,
   IonReorderGroup,
   IonReorder,
+  IonProgressBar,
 } from '@ionic/react';
 import {
   sparklesOutline,
@@ -47,10 +48,12 @@ import ConfirmGate from '../components/ConfirmGate';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTranslation } from 'react-i18next';
 import { LLMService } from '../lib/llm/service';
+import { useToast } from '../lib/ui/useToast';
 
 const EntryDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const { toast, show } = useToast();
   const [entry, setEntry] = useState<InboxEntry | null>(null);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -65,6 +68,8 @@ const EntryDetailScreen: React.FC = () => {
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchResult, setBatchResult] = useState<BatchResult | null>(null);
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
+  // 批量入库进度（runBatch.onProgress）
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
   // 批量选中（用于批量删除）
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteGateOpen, setDeleteGateOpen] = useState(false);
@@ -145,11 +150,10 @@ const EntryDetailScreen: React.FC = () => {
 
   const generate = async () => {
     setGenerating(true);
-    setMessage('');
     try {
       const text = await ensureExtracted();
       if (!text) {
-        setMessage(t('entry.noText'));
+        show(t('entry.noText'), 'info');
         return;
       }
       // 来源哈希（去重/增量更新依据）
@@ -175,7 +179,7 @@ const EntryDetailScreen: React.FC = () => {
           return; // 等待确认门（finally 会重置 generating）
         }
         // 无变化：跳过写入
-        setMessage(t('entry.noChanges'));
+        show(t('entry.noChanges'), 'info');
         return;
       }
 
@@ -191,9 +195,9 @@ const EntryDetailScreen: React.FC = () => {
         })),
         []
       );
-      setMessage(t('entry.generated', { count: newCards.length }));
+      show(t('entry.generated', { count: newCards.length }), 'success');
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t('entry.generationFailed'));
+      show(e instanceof Error ? e.message : t('entry.generationFailed'), 'error');
     } finally {
       setGenerating(false);
     }
@@ -217,15 +221,16 @@ const EntryDetailScreen: React.FC = () => {
       );
       const total =
         gateSummary.added.length + gateSummary.changed.length + gateSummary.unchanged.length;
-      setMessage(
+      show(
         t('entry.updated', {
           count: total,
           added: gateSummary.added.length,
           changed: gateSummary.changed.length,
-        })
+        }),
+        'success'
       );
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t('entry.updateFailed'));
+      show(e instanceof Error ? e.message : t('entry.updateFailed'), 'error');
     } finally {
       setGateOpen(false);
       setGateSummary(null);
@@ -252,25 +257,25 @@ const EntryDetailScreen: React.FC = () => {
 
   const addCardToAnki = async (card: Flashcard) => {
     setAdding(true);
-    setMessage('');
     try {
       await buildAddTask(card)();
       await load();
-      setMessage(t('entry.added'));
+      show(t('entry.added'), 'success');
     } catch (e) {
       await Inbox.updateCardStatus({ cardId: card.id, status: 'error' });
-      setMessage(e instanceof Error ? e.message : t('entry.addFailed'));
+      show(e instanceof Error ? e.message : t('entry.addFailed'), 'error');
     } finally {
       setAdding(false);
     }
   };
 
-  /** 批量入库：二次确认 → 串行执行 → 失败清单 */
+  /** 批量入库：二次确认 → 串行执行 → 进度反馈 → 失败清单 */
   const confirmBatchAdd = async () => {
     setBatchRunning(true);
-    setMessage('');
+    setBatchProgress({ done: 0, total: 0 });
     try {
       const pending = cards.filter((c) => c.status !== 'added');
+      setBatchProgress({ done: 0, total: pending.length });
       const result = await runBatch(
         pending.map((c) => ({
           id: c.id,
@@ -284,18 +289,26 @@ const EntryDetailScreen: React.FC = () => {
               throw e;
             }
           },
-        }))
+        })),
+        (done, total) => setBatchProgress({ done, total })
       );
+      setBatchProgress(null);
       setBatchResult(result);
       if (allSucceeded(result)) {
         setBatchConfirmOpen(false);
         setBatchResult(null);
-        setMessage(t('entry.batchAdded', { count: result.successCount }));
+        show(t('entry.batchAdded', { count: result.successCount }), 'success');
+      } else {
+        show(
+          t('entry.batchAddPartial', { success: result.successCount, failed: result.failureCount }),
+          'error'
+        );
       }
       // 有失败：保留门展示失败清单（result 通过 batchResult state 呈现）
       await load();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t('entry.batchFailed'));
+      setBatchProgress(null);
+      show(e instanceof Error ? e.message : t('entry.batchFailed'), 'error');
     } finally {
       setBatchRunning(false);
     }
@@ -309,9 +322,9 @@ const EntryDetailScreen: React.FC = () => {
       setSelectedIds(new Set());
       setDeleteGateOpen(false);
       await load();
-      setMessage(t('entry.deletedCards', { count: ids.length }));
+      show(t('entry.deletedCards', { count: ids.length }), 'success');
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t('entry.deleteFailed'));
+      show(e instanceof Error ? e.message : t('entry.deleteFailed'), 'error');
     }
   };
 
@@ -336,7 +349,7 @@ const EntryDetailScreen: React.FC = () => {
         }
       }
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : t('entry.persistOrderFailed'));
+      show(e instanceof Error ? e.message : t('entry.persistOrderFailed'), 'error');
     }
   };
 
@@ -435,6 +448,19 @@ const EntryDetailScreen: React.FC = () => {
 
             {cards.length > 0 && (
               <>
+                {/* 批量进度（入库进行中） */}
+                {batchProgress && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <IonProgressBar value={batchProgress.done / Math.max(1, batchProgress.total)} />
+                    <IonNote color="medium">
+                      {t('entry.batchProgress', {
+                        done: batchProgress.done,
+                        total: batchProgress.total,
+                      })}
+                    </IonNote>
+                  </div>
+                )}
+
                 {/* 批量工具栏 */}
                 <div
                   style={{
@@ -546,6 +572,7 @@ const EntryDetailScreen: React.FC = () => {
               </>
             )}
 
+            {/* 常驻错误（如页面加载失败）：瞬时操作结果走 toast */}
             {message && (
               <IonCard style={{ marginTop: '1rem' }}>
                 <IonCardContent>
@@ -553,6 +580,7 @@ const EntryDetailScreen: React.FC = () => {
                 </IonCardContent>
               </IonCard>
             )}
+            {toast}
 
             <ConfirmGate
               open={gateOpen}

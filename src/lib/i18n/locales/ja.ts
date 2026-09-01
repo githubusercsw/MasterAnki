@@ -51,6 +51,8 @@ const ja = {
     updated: '{{count}} 枚のカードを更新（新規 {{added}}、変更 {{changed}}）。',
     updateFailed: '更新に失敗',
     batchAdded: '{{count}} 枚のカードを AnkiDroid に追加しました。',
+    batchAddPartial: '一括追加: {{success}} 件成功、{{failed}} 件失敗。失敗リストを参照。',
+    batchProgress: '追加中 {{done}}/{{total}}…',
     batchFailed: '一括追加に失敗',
     deletedCards: '{{count}} 枚のカードを削除しました。',
     deleteFailed: '削除に失敗',

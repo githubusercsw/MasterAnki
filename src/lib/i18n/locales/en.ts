@@ -49,6 +49,8 @@ const en = {
     updated: 'Updated {{count}} cards ({{added}} new, {{changed}} changed).',
     updateFailed: 'Update failed',
     batchAdded: 'Added {{count}} cards to AnkiDroid.',
+    batchAddPartial: 'Batch add: {{success}} succeeded, {{failed}} failed. See the failure list.',
+    batchProgress: 'Adding {{done}}/{{total}}…',
     batchFailed: 'Batch add failed',
     deletedCards: 'Deleted {{count}} cards.',
     deleteFailed: 'Delete failed',
