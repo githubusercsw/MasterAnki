@@ -18,21 +18,13 @@ import {
   IonCardContent,
   IonInput,
   IonNote,
-  IonCheckbox,
   IonSelect,
   IonSelectOption,
   IonIcon,
   IonReorderGroup,
-  IonReorder,
   IonProgressBar,
 } from '@ionic/react';
-import {
-  sparklesOutline,
-  checkmarkCircleOutline,
-  createOutline,
-  refreshOutline,
-  warningOutline,
-} from 'ionicons/icons';
+import { sparklesOutline, refreshOutline } from 'ionicons/icons';
 import Inbox from '../plugins/Inbox';
 import AnkiDroid from '../plugins/AnkiDroid';
 import { MODELS } from '../lib/anki/ankidroid';
@@ -45,7 +37,7 @@ import type { CardChangeSummary } from '../lib/anki/dedupService';
 import { runBatch, allSucceeded } from '../lib/anki/batch';
 import type { BatchResult } from '../lib/anki/batch';
 import ConfirmGate from '../components/ConfirmGate';
-import MarkdownRenderer from '../components/MarkdownRenderer';
+import CardListItem from '../components/CardListItem';
 import { useTranslation } from 'react-i18next';
 import { LLMService } from '../lib/llm/service';
 import { useToast } from '../lib/ui/useToast';
@@ -515,57 +507,22 @@ const EntryDetailScreen: React.FC = () => {
                 <IonReorderGroup disabled={false} onIonItemReorder={handleReorder}>
                   <IonList style={{ marginTop: '0.5rem' }}>
                     {cards.map((card) => (
-                      <IonItem key={card.id}>
-                        {card.status === 'added' ? (
-                          <IonCheckbox slot="start" checked disabled />
-                        ) : (
-                          <IonCheckbox
-                            slot="start"
-                            checked={selectedIds.has(card.id)}
-                            onIonChange={(e) => {
-                              const checked = e.detail.checked;
-                              setSelectedIds((prev) => {
-                                const next = new Set(prev);
-                                if (checked) next.add(card.id);
-                                else next.delete(card.id);
-                                return next;
-                              });
-                            }}
-                          />
-                        )}
-                        <IonLabel>
-                          <MarkdownRenderer content={card.front} compact />
-                          <MarkdownRenderer content={card.back} compact />
-                          <IonNote>{card.type}</IonNote>
-                          {card.status === 'error' && (
-                            <IonNote color="danger">
-                              <IonIcon icon={warningOutline} /> {t('entry.errorStatus')}
-                            </IonNote>
-                          )}
-                        </IonLabel>
-                        {card.status === 'added' ? (
-                          <IonIcon icon={checkmarkCircleOutline} slot="end" color="success" />
-                        ) : (
-                          <IonButton
-                            slot="end"
-                            size="small"
-                            color={card.status === 'error' ? 'danger' : undefined}
-                            onClick={() => addCardToAnki(card)}
-                            disabled={adding}
-                          >
-                            {card.status === 'error' ? t('entry.retry') : t('entry.add')}
-                          </IonButton>
-                        )}
-                        <IonButton
-                          slot="end"
-                          size="small"
-                          fill="clear"
-                          routerLink={`/entry/${entry.id}/edit/${card.id}`}
-                        >
-                          <IonIcon icon={createOutline} />
-                        </IonButton>
-                        <IonReorder slot="end" />
-                      </IonItem>
+                      <CardListItem
+                        key={card.id}
+                        card={card}
+                        entryId={entry.id}
+                        isSelected={selectedIds.has(card.id)}
+                        adding={adding}
+                        onToggleSelect={(cardId, checked) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (checked) next.add(cardId);
+                            else next.delete(cardId);
+                            return next;
+                          });
+                        }}
+                        onAdd={addCardToAnki}
+                      />
                     ))}
                   </IonList>
                 </IonReorderGroup>
