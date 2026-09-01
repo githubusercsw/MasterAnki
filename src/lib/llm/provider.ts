@@ -27,6 +27,15 @@ export interface LLMResponse {
   usage?: LLMUsage;
 }
 
+/** 测试连接失败原因（区分四类 BYOK 常见失败） */
+export type ConnectionIssue = 'missing_key' | 'invalid_key' | 'network' | 'model_error' | 'ok';
+
+export interface TestConnectionResult {
+  ok: boolean;
+  issue: ConnectionIssue;
+  message: string;
+}
+
 export interface LLMProvider extends Plugin {
   readonly type: 'llm';
   readonly capabilities: {
@@ -40,6 +49,9 @@ export interface LLMProvider extends Plugin {
 
   /** 校验当前配置是否可用（Key/Endpoint） */
   validateConfig(): Promise<boolean>;
+
+  /** 测试连接：真实发起一次最小请求，区分四类失败原因（BYOK 刚需） */
+  testConnection(): Promise<TestConnectionResult>;
 
   /** 读取当前已配置的模型名 */
   getConfiguredModel(): Promise<string>;

@@ -37,3 +37,54 @@ jobs:
 
       - name: Build web
         run: npm run build
+
+  android-build:
+    name: Android Build
+    runs-on: ubuntu-latest
+    # 确保 main 分支上的 Java 原生层也能编译通过，把"main 可能构建失败"从未知变成已知
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '21'
+          cache: gradle
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install & Build Web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Capacitor Sync
+        run: npx cap sync android
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK Packages
+        run: |
+          sdkmanager "platform-tools" \
+                     "platforms;android-34" \
+                     "build-tools;34.0.0"
+
+      - name: Build Gradle Debug APK
+        working-directory: ./android
+        run: ./gradlew assembleDebug
+
+      # 构建产物门禁：校验 APK 存在与包信息
+      - name: Smoke Check APK (aapt verify)
+        working-directory: ./android
+        run: |
+          APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+          echo "APK=$APK"
+          test -n "$APK"
+          aapt dump badging "$APK" | head -3

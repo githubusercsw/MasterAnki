@@ -6,7 +6,12 @@
  */
 
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
-import type { LLMProvider, LLMResponse, LLMGenerateOptions } from '../provider';
+import type {
+  LLMProvider,
+  LLMResponse,
+  LLMGenerateOptions,
+  TestConnectionResult,
+} from '../provider';
 import type { PluginContext } from '../../plugins/types';
 
 export const GEMINI_PROVIDER_ID = 'gemini';
@@ -122,6 +127,32 @@ export class GeminiProvider implements LLMProvider {
   async validateConfig(): Promise<boolean> {
     const key = await this.getSetting(KEYS.apiKey);
     return !!key && key.length > 0;
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    const apiKey = (await this.getSetting(KEYS.apiKey)) ?? null;
+    if (!apiKey) {
+      return { ok: false, issue: 'missing_key', message: 'Gemini API Key 未配置' };
+    }
+    try {
+      const { model } = await this.buildClient();
+      await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+        generationConfig: {
+          maxOutputTokens: 1,
+        } as import('@google/generative-ai').GenerationConfig,
+      });
+      return { ok: true, issue: 'ok', message: '连接成功' };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'unknown';
+      if (/api key|permission|401|403|unauthenticated|denied/i.test(msg)) {
+        return { ok: false, issue: 'invalid_key', message: `API Key 无效：${msg}` };
+      }
+      if (/not found|404|model/i.test(msg)) {
+        return { ok: false, issue: 'model_error', message: `模型/请求错误：${msg}` };
+      }
+      return { ok: false, issue: 'network', message: `网络/端点不可达：${msg}` };
+    }
   }
 
   async getConfiguredModel(): Promise<string> {

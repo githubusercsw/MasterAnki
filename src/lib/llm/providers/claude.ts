@@ -5,7 +5,12 @@
  * 使用原生 fetch 调用 Anthropic Messages API。
  */
 
-import type { LLMProvider, LLMResponse, LLMGenerateOptions } from '../provider';
+import type {
+  LLMProvider,
+  LLMResponse,
+  LLMGenerateOptions,
+  TestConnectionResult,
+} from '../provider';
 import type { PluginContext } from '../../plugins/types';
 
 export const CLAUDE_PROVIDER_ID = 'claude';
@@ -138,6 +143,47 @@ export class ClaudeProvider implements LLMProvider {
   async validateConfig(): Promise<boolean> {
     const key = await this.getSetting(KEYS.apiKey);
     return !!key && key.length > 0;
+  }
+
+  async testConnection(): Promise<TestConnectionResult> {
+    const apiKey = (await this.getSetting(KEYS.apiKey)) ?? '';
+    if (!apiKey) {
+      return { ok: false, issue: 'missing_key', message: 'Claude API Key 未配置' };
+    }
+    const { model } = await this.resolveConfig();
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': ANTHROPIC_VERSION,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'ping' }],
+        }),
+      });
+      if (resp.ok) return { ok: true, issue: 'ok', message: '连接成功' };
+      const data = (await resp.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null;
+      const detail = data?.error?.message ?? `HTTP ${resp.status}`;
+      if (resp.status === 401 || resp.status === 403) {
+        return { ok: false, issue: 'invalid_key', message: `API Key 无效：${detail}` };
+      }
+      if (resp.status === 404 || resp.status === 400) {
+        return { ok: false, issue: 'model_error', message: `模型/请求错误：${detail}` };
+      }
+      return { ok: false, issue: 'network', message: `服务不可达（HTTP ${resp.status}）` };
+    } catch (e) {
+      return {
+        ok: false,
+        issue: 'network',
+        message: `网络/端点不可达：${e instanceof Error ? e.message : 'unknown'}`,
+      };
+    }
   }
 
   async getConfiguredModel(): Promise<string> {

@@ -28,7 +28,7 @@ import {
   sparklesOutline,
   trashOutline,
   checkmarkCircleOutline,
-  documentTextOutline,
+  closeCircleOutline,
   moonOutline,
   sunnyOutline,
   contrastOutline,
@@ -38,6 +38,7 @@ import {
   refreshOutline,
 } from 'ionicons/icons';
 import { LLMService } from '../lib/llm/service';
+import type { TestConnectionResult } from '../lib/llm/provider';
 import {
   getProviderApiKey,
   setProviderApiKey,
@@ -46,12 +47,7 @@ import {
   getActiveProviderId,
   clearProviderSettings,
 } from '../lib/settings/secureStorage';
-import {
-  GEMINI_PROVIDER_ID,
-  DEFAULT_GEMINI_MODEL,
-  PROVIDER_META,
-  type ProviderMeta,
-} from '../lib/llm/providers';
+import { GEMINI_PROVIDER_ID, PROVIDER_META, type ProviderMeta } from '../lib/llm/providers';
 import { useTheme, type ThemeMode } from '../lib/theme/ThemeContext';
 import { getDefaultContext } from '../lib/plugins/context';
 import { setLanguage, SUPPORTED_LANGUAGES, type Language } from '../lib/i18n';
@@ -91,11 +87,12 @@ const SettingsScreen: React.FC = () => {
   const [activeProvider, setActiveProvider] = useState<string>(GEMINI_PROVIDER_ID);
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('');
-  const [endpoint, setEndpoint] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<TestConnectionResult | null>(null);
   // 日志区状态
   const [logs, setLogs] = useState<LogRecord[]>([]);
   const [logLoading, setLogLoading] = useState(false);
@@ -138,8 +135,16 @@ const SettingsScreen: React.FC = () => {
     try {
       // 同步 LLMService 内存注册表，使后续管线立即使用新 Provider
       await LLMService.getInstance().setActive(activeProvider, true);
-      await setProviderApiKey(activeProvider, apiKey.trim());
-      await setProviderModel(activeProvider, model.trim() || DEFAULT_GEMINI_MODEL);
+      // 检查写入返回值：任一失败必须报错，不许弹「已保存」
+      const keyOk = await setProviderApiKey(activeProvider, apiKey.trim());
+      const modelOk = await setProviderModel(
+        activeProvider,
+        model.trim() || (meta?.defaultModel ?? '')
+      );
+      if (!keyOk || !modelOk) {
+        setError(t('settings.saveFailed'));
+        return;
+      }
       setSaved(true);
       setTimeout(() => history.goBack(), 800);
     } catch (e) {
@@ -153,8 +158,27 @@ const SettingsScreen: React.FC = () => {
     await clearProviderSettings(activeProvider);
     setApiKey('');
     setModel('');
-    setEndpoint('');
     setSaved(false);
+  };
+
+  /** 测试连接：先把当前表单配置落盘（不跳转），再真实发起最小请求，区分四类失败原因 */
+  const testConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+    setError('');
+    try {
+      // 先落盘当前表单值，保证测试的就是屏幕上的配置（active 仅在内存切换，不持久化）
+      await LLMService.getInstance().setActive(activeProvider, false);
+      await setProviderApiKey(activeProvider, apiKey.trim());
+      await setProviderModel(activeProvider, model.trim() || (meta?.defaultModel ?? ''));
+      const provider = await LLMService.getInstance().getActiveProvider();
+      const result = await provider.testConnection();
+      setTestResult(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to test connection');
+    } finally {
+      setTesting(false);
+    }
   };
 
   const meta = PROVIDERS.find((p) => p.id === activeProvider) ?? PROVIDERS[0];
@@ -280,29 +304,50 @@ const SettingsScreen: React.FC = () => {
                 <IonInput
                   type="text"
                   value={model}
-                  placeholder={DEFAULT_GEMINI_MODEL}
+                  placeholder={meta.defaultModel}
                   onIonInput={(e) => {
                     setModel(String(e.detail.value ?? ''));
                     setSaved(false);
                   }}
                 />
               </IonItem>
-
-              {meta.needsEndpoint && (
-                <IonItem>
-                  <IonLabel position="stacked">{t('settings.endpoint')}</IonLabel>
-                  <IonInput
-                    type="text"
-                    value={endpoint}
-                    placeholder="http://localhost:11434"
-                    onIonInput={(e) => {
-                      setEndpoint(String(e.detail.value ?? ''));
-                      setSaved(false);
-                    }}
-                  />
-                </IonItem>
-              )}
             </IonList>
+
+            <IonButton
+              expand="block"
+              fill="outline"
+              onClick={() => void testConnection()}
+              disabled={testing}
+              style={{ marginTop: '0.5rem' }}
+            >
+              {testing ? (
+                <IonSpinner name="crescent" />
+              ) : (
+                <IonIcon icon={refreshOutline} slot="start" />
+              )}
+              {testing ? t('settings.testing') : t('settings.testConnection')}
+            </IonButton>
+
+            {testResult && (
+              <IonCard color={testResult.ok ? 'success' : 'danger'} style={{ marginTop: '0.5rem' }}>
+                <IonCardContent>
+                  <IonText color="light">
+                    {testResult.ok ? (
+                      <>
+                        <IonIcon icon={checkmarkCircleOutline} /> {t('settings.testOk')}
+                      </>
+                    ) : (
+                      <>
+                        <IonIcon icon={closeCircleOutline} /> {t('settings.testFail')}
+                        <div style={{ fontSize: '0.85rem', marginTop: '0.3rem', opacity: 0.9 }}>
+                          {testResult.message}
+                        </div>
+                      </>
+                    )}
+                  </IonText>
+                </IonCardContent>
+              </IonCard>
+            )}
 
             {/* 外观：主题 + 语言 */}
             <IonCard style={{ marginTop: '1rem' }}>
@@ -346,26 +391,13 @@ const SettingsScreen: React.FC = () => {
               </IonItem>
             </IonList>
 
-            {/* 自定义提示词 */}
+            {/* 日志区 */}
             <IonAccordionGroup
               style={{ marginTop: '1rem' }}
               onIonChange={(e) => {
                 if (e.detail.value === 'logs') void refreshLogs();
               }}
             >
-              <IonAccordion value="prompts">
-                <IonItem slot="header" color="light">
-                  <IonIcon icon={documentTextOutline} slot="start" />
-                  <IonLabel>{t('settings.customPrompts')}</IonLabel>
-                </IonItem>
-                <div className="ion-padding" slot="content">
-                  <IonText>
-                    <p>{t('settings.customPromptsNote')}</p>
-                  </IonText>
-                </div>
-              </IonAccordion>
-
-              {/* 日志区 */}
               <IonAccordion value="logs">
                 <IonItem slot="header" color="light">
                   <IonIcon icon={listOutline} slot="start" />

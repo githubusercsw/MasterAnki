@@ -63,6 +63,55 @@ describe('OpenAICompatibleProvider', () => {
     await expect(p.generateContent('x')).rejects.toThrow(/API Key not configured/);
   });
 
+  it('testConnection: 未配置 Key 返回 missing_key', async () => {
+    const p = createOpenAIProvider();
+    await p.init(makeCtx({}));
+    const r = await p.testConnection();
+    expect(r.ok).toBe(false);
+    expect(r.issue).toBe('missing_key');
+  });
+
+  it('testConnection: 401 返回 invalid_key', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: { message: 'Invalid API key' } }),
+      })
+    );
+    const p = createOpenAIProvider();
+    await p.init(makeCtx({ 'masteranki:provider:openai:apiKey': 'sk-bad' }));
+    const r = await p.testConnection();
+    expect(r.ok).toBe(false);
+    expect(r.issue).toBe('invalid_key');
+  });
+
+  it('testConnection: 200 返回 ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({}),
+      })
+    );
+    const p = createOpenAIProvider();
+    await p.init(makeCtx({ 'masteranki:provider:openai:apiKey': 'sk-ok' }));
+    const r = await p.testConnection();
+    expect(r.ok).toBe(true);
+    expect(r.issue).toBe('ok');
+  });
+
+  it('testConnection: 网络异常返回 network', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fetch failed')));
+    const p = createOpenAIProvider();
+    await p.init(makeCtx({ 'masteranki:provider:openai:apiKey': 'sk-ok' }));
+    const r = await p.testConnection();
+    expect(r.ok).toBe(false);
+    expect(r.issue).toBe('network');
+  });
+
   it('returns error finishReason on HTTP failure', async () => {
     vi.stubGlobal(
       'fetch',
@@ -144,12 +193,45 @@ describe('ClaudeProvider (tool_use)', () => {
     await p.init(makeCtx({}));
     await expect(p.generateContent('x')).rejects.toThrow(/API Key not configured/);
   });
+
+  it('testConnection: Claude 未配置 Key 返回 missing_key', async () => {
+    const p = new ClaudeProvider();
+    await p.init(makeCtx({}));
+    const r = await p.testConnection();
+    expect(r.ok).toBe(false);
+    expect(r.issue).toBe('missing_key');
+  });
+
+  it('testConnection: Claude 403 返回 invalid_key', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: { message: 'Forbidden' } }),
+      })
+    );
+    const p = new ClaudeProvider();
+    await p.init(makeCtx({ 'masteranki:provider:claude:apiKey': 'sk-ant-bad' }));
+    const r = await p.testConnection();
+    expect(r.ok).toBe(false);
+    expect(r.issue).toBe('invalid_key');
+  });
 });
 
 describe('统一注册入口', () => {
   it('PROVIDER_META 覆盖全部 7 个 Provider', () => {
     const ids = PROVIDER_META.map((m) => m.id);
     expect(ids).toEqual(['gemini', 'openai', 'claude', 'ollama', 'qwen', 'deepseek', 'kimi']);
+  });
+
+  it('PROVIDER_META 每项含按 Provider 分发的 defaultModel（不写死单一默认）', () => {
+    for (const meta of PROVIDER_META) {
+      expect(meta.defaultModel).toBeTruthy();
+    }
+    // 各 Provider 默认模型互不相同，证明按 Provider 分发而非全局写死
+    const models = new Set(PROVIDER_META.map((m) => m.defaultModel));
+    expect(models.size).toBe(PROVIDER_META.length);
   });
 
   it('buildAllProviders 返回 7 个实例且 id 唯一', () => {
