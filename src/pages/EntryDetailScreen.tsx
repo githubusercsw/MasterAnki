@@ -28,6 +28,8 @@ import { sparklesOutline, refreshOutline } from 'ionicons/icons';
 import Inbox from '../plugins/Inbox';
 import AnkiDroid from '../plugins/AnkiDroid';
 import { MODELS } from '../lib/anki/ankidroid';
+import { getSelectedAnkiModel } from '../lib/anki/modelSelection';
+import { inferCardTypeFromModelName } from '../lib/anki/resolveModel';
 import { useDeckSelector } from '../lib/anki/useDeckSelector';
 import { buildAnkiNote } from '../lib/anki/noteBuilder';
 import type { InboxEntry, Flashcard } from '../lib/anki/types';
@@ -41,6 +43,7 @@ import CardListItem from '../components/CardListItem';
 import { useTranslation } from 'react-i18next';
 import { LLMService } from '../lib/llm/service';
 import { useToast } from '../lib/ui/useToast';
+import { getActiveProviderId } from '../lib/settings/secureStorage';
 
 const EntryDetailScreen: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -135,7 +138,9 @@ const EntryDetailScreen: React.FC = () => {
       // 增量更新：移除被替换的旧卡
       await Inbox.deleteCards({ cardIds: removedIds });
     }
-    await Inbox.saveCards({ entryId: id, cards: cardsToSave });
+    // card_generated 统计需要 Provider 维度（P0-5 修复）
+    const providerId = await getActiveProviderId();
+    await Inbox.saveCards({ entryId: id, cards: cardsToSave, providerId });
     await Inbox.lockEntry({ entryId: id });
     await load();
   };
@@ -150,9 +155,12 @@ const EntryDetailScreen: React.FC = () => {
       }
       // 来源哈希（去重/增量更新依据）
       const sourceHash = await computeSourceHash(text);
+      // 卡片类型按用户所选模型推导（修复：原先硬编码 basic 导致 Cloze/IO 模板脱节）
+      const selectedModel = await getSelectedAnkiModel();
+      const cardType = inferCardTypeFromModelName(selectedModel);
       // 构建管线：使用当前活跃 Provider（含用户自定义 prompt）
       const pipeline = await LLMService.getInstance().getPipeline();
-      const result = await pipeline.run(text, entry?.title, 'basic');
+      const result = await pipeline.run(text, entry?.title, cardType);
 
       const newCards: Flashcard[] = result.cards.map((c) => ({
         ...c,
@@ -200,6 +208,12 @@ const EntryDetailScreen: React.FC = () => {
     try {
       if (!gateSummary) return;
       const removedIds = gateSummary.removed.map((c) => c.id).filter((cid): cid is string => !!cid);
+      // P0-4：已入库（有 noteId）的旧卡被替换时，AnkiDroid 侧 note 无法自动删除
+      // （Instant-Add API 无 deleteNote），必须提示用户手动清理，避免静默产生孤儿 note
+      const syncedRemoved = gateSummary.removed.filter((c) => c.noteId != null && c.noteId > 0);
+      if (syncedRemoved.length > 0) {
+        show(t('entry.syncedRemovedNotice', { count: syncedRemoved.length }), 'info');
+      }
       await persistCards(
         pendingCards.map((c) => ({
           front: c.front,

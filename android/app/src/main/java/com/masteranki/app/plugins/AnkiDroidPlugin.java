@@ -113,6 +113,7 @@ public class AnkiDroidPlugin extends Plugin {
     public void ensureModel(PluginCall call) {
         String modelKey = call.getString("modelKey");
         JSArray fieldsArr = call.getArray("fields");
+        JSArray templatesArr = call.getArray("templates");
         if (modelKey == null) {
             call.reject("Missing required parameter: modelKey");
             return;
@@ -120,8 +121,23 @@ public class AnkiDroidPlugin extends Plugin {
         try {
             AddContentApi api = api();
             String modelName = resolveModelName(modelKey);
-            ensureModel(api, modelName);
-            call.resolve();
+            long modelId;
+            // 已有同名模型：直接复用（字段以 AnkiDroid 实际为准）
+            Long existing = findModelByName(api, modelName);
+            if (existing != null) {
+                modelId = existing;
+            } else if (fieldsArr != null && fieldsArr.length() > 0
+                    && templatesArr != null && templatesArr.length() > 0) {
+                // 修复：用 addNewCustomModel 按前端定义的字段+模板建模型，
+                // 避免此前一律 addNewBasicModel 导致 Cloze/IO 模型建成 Basic 壳
+                modelId = ensureCustomModel(api, modelName, fieldsArr, templatesArr);
+            } else {
+                // 兜底（无字段/模板定义时）：Basic
+                modelId = ensureModel(api, modelName);
+            }
+            JSObject ret = new JSObject();
+            ret.put("modelId", modelId);
+            call.resolve(ret);
         } catch (Exception e) {
             logError("AnkiDroid", "ensureModel", e);
             call.reject("Failed to ensure model: " + e.getMessage(), e);
@@ -260,6 +276,18 @@ public class AnkiDroidPlugin extends Plugin {
                 call.reject("Cannot resolve field order for model " + modelKey);
                 return;
             }
+            // 修复 P0-3：校验新旧模型字段数一致，不一致说明正在跨模型更新
+            // （改 type/所选模型），AnkiDroid 无法安全迁移，拒绝并提示，避免字段错位写坏数据
+            com.ichi2.anki.api.NoteInfo info = api.getNote(noteId);
+            if (info != null) {
+                String[] oldFields = info.getFields();
+                if (oldFields != null && oldFields.length != fieldOrder.length) {
+                    call.reject("Cannot change note model: field count mismatch ("
+                            + oldFields.length + " -> " + fieldOrder.length
+                            + "). Edit type/model change is not supported for synced cards.");
+                    return;
+                }
+            }
             String[] fields = new String[fieldOrder.length];
             for (int i = 0; i < fieldOrder.length; i++) {
                 fields[i] = fieldsObj.optString(fieldOrder[i], "");
@@ -362,8 +390,8 @@ public class AnkiDroidPlugin extends Plugin {
         return ensureModel(api, resolveModelName(modelKey));
     }
 
-    /** 幂等建模型：按名字在 AnkiDroid 中查找，找不到则用 addNewBasicModel 创建 */
-    private long ensureModel(AddContentApi api, String name) {
+    /** 按名字查找模型 id，找不到返回 null */
+    private Long findModelByName(AddContentApi api, String name) throws Exception {
         Map<Long, String> models = api.getModelList();
         if (models != null) {
             for (Map.Entry<Long, String> e : models.entrySet()) {
@@ -372,9 +400,51 @@ public class AnkiDroidPlugin extends Plugin {
                 }
             }
         }
+        return null;
+    }
+
+    /** 幂等建模型：按名字在 AnkiDroid 中查找，找不到则用 addNewBasicModel 创建 */
+    private long ensureModel(AddContentApi api, String name) {
+        Long existing = null;
+        try {
+            existing = findModelByName(api, name);
+        } catch (Exception ignored) {
+        }
+        if (existing != null) {
+            return existing;
+        }
         Long id = api.addNewBasicModel(name);
         if (id == null) {
             throw new IllegalStateException("Failed to create model: " + name);
+        }
+        return id;
+    }
+
+    /**
+     * 用前端传入的字段+模板定义创建自定义模型（addNewCustomModel）。
+     * 修复 P0-2：此前 ensureModel 忽略 fields/templates，兜底建成 Basic 壳，
+     * 导致 Cloze/IO 等模型字段错乱。
+     */
+    private long ensureCustomModel(AddContentApi api, String name,
+                                   JSArray fieldsArr, JSArray templatesArr) throws Exception {
+        int nFields = fieldsArr.length();
+        String[] fields = new String[nFields];
+        for (int i = 0; i < nFields; i++) {
+            fields[i] = fieldsArr.getString(i);
+        }
+        int nTpl = templatesArr.length();
+        String[] cards = new String[nTpl];
+        String[] qfmt = new String[nTpl];
+        String[] afmt = new String[nTpl];
+        for (int i = 0; i < nTpl; i++) {
+            JSONObject t = templatesArr.getJSONObject(i);
+            cards[i] = t.optString("name", "Card " + (i + 1));
+            qfmt[i] = t.optString("qfmt", "{{Front}}");
+            afmt[i] = t.optString("afmt", "{{Front}}<hr id=\"answer\">{{Back}}");
+        }
+        Long id = api.addNewCustomModel(name, fields, cards, qfmt, afmt, null, null, null);
+        if (id == null) {
+            throw new IllegalStateException("Failed to create custom model: " + name);
         }
         return id;
     }

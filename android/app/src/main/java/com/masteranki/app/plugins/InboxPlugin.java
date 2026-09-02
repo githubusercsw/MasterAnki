@@ -183,9 +183,11 @@ public class InboxPlugin extends Plugin {
                 cards.add(fc);
             }
             dao().saveCards(cards);
-            // 统计埋点：card_generated 带来源类型（Phase 4 按来源维度分析）
+            // 统计埋点：card_generated 带来源类型 + 生成 Provider（Phase 4 按 Provider×来源交叉分析）
             InboxEntry e = dao().getEntry(entryId);
-            recordStats("card_generated", cards.size(), e != null ? e.contentType : null, null);
+            String providerId = call.getData().has("providerId")
+                    && !call.getData().isNull("providerId") ? call.getString("providerId") : null;
+            recordStats("card_generated", cards.size(), e != null ? e.contentType : null, providerId);
             call.resolve();
         } catch (Exception e) {
             logError("Inbox", "saveCards", e);

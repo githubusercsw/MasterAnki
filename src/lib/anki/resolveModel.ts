@@ -7,6 +7,7 @@
  */
 
 import AnkiDroid, { type AnkiModelInfo } from '../../plugins/AnkiDroid';
+import type { CardType } from './types';
 
 /** 语义字段 → 卡片内容（由调用方注入） */
 export interface CardFieldValues {
@@ -67,4 +68,22 @@ export async function findModelByName(name: string): Promise<AnkiModelInfo | nul
   } catch {
     return null;
   }
+}
+
+/**
+ * 由用户所选模型名推导卡片类型（生成链路的 cardType 来源）。
+ *
+ * 修复：生成侧原先硬编码 'basic'，导致用户选 Cloze/Image Occlusion 模板时
+ * 生成与模板脱节、字段映射错位。规则：
+ * - 模型名含 cloze → 'cloze'
+ * - 模型名含 image/occlusion/occlu → 'image_occlusion'
+ * - 其余（含未选）→ 'basic'
+ */
+export function inferCardTypeFromModelName(modelName: string | null | undefined): CardType {
+  const name = (modelName ?? '').toLowerCase();
+  if (name.includes('cloze')) return 'cloze';
+  if (name.includes('image') || name.includes('occlu') || name.includes('occlusion')) {
+    return 'image_occlusion';
+  }
+  return 'basic';
 }

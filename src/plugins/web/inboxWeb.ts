@@ -106,7 +106,7 @@ export const webInbox: InboxPlugin = {
     writeCards(readCards().filter((c) => c.entryId !== id));
   },
 
-  async saveCards({ entryId, cards }) {
+  async saveCards({ entryId, cards, providerId }) {
     const all = readCards();
     const now = Date.now();
     const drafts: Flashcard[] = cards.map((c: CardDraft, i: number) => ({
@@ -125,7 +125,7 @@ export const webInbox: InboxPlugin = {
       createdAt: now,
     }));
     writeCards([...all, ...drafts]);
-    recordStat('card_generated', drafts.length);
+    recordStat('card_generated', drafts.length, undefined, providerId ?? undefined);
   },
 
   async updateCardContent({ cardId, front, back, cloze, imageUrl, type, tags }) {

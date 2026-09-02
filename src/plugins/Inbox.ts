@@ -38,7 +38,12 @@ export interface InboxPlugin {
   getEntry(options: { id: string }): Promise<{ entry: InboxEntry; cards: Flashcard[] }>;
   saveEntry(options: { entry: SaveEntryInput }): Promise<void>;
   deleteEntry(options: { id: string }): Promise<void>;
-  saveCards(options: { entryId: string; cards: CardDraft[] }): Promise<void>;
+  saveCards(options: {
+    entryId: string;
+    cards: CardDraft[];
+    /** 生成 Provider id（card_generated 统计维度，Phase 4 按 Provider 归因） */
+    providerId?: string | null;
+  }): Promise<void>;
   updateCardContent(options: {
     cardId: string;
     front: string;

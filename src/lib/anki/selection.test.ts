@@ -50,7 +50,7 @@ vi.mock('../../plugins/AnkiDroid', () => {
 import Settings from '../../plugins/Settings';
 import { ANKI_DECK_KEY, getSelectedAnkiDeck, setSelectedAnkiDeck } from './deckSelection';
 import { ANKI_MODEL_KEY, getSelectedAnkiModel, setSelectedAnkiModel } from './modelSelection';
-import { mapFieldsToModel, findModelByName } from './resolveModel';
+import { mapFieldsToModel, findModelByName, inferCardTypeFromModelName } from './resolveModel';
 
 beforeEach(() => {
   // 清空 mock Settings 存储
@@ -111,6 +111,27 @@ describe('mapFieldsToModel', () => {
     const out = mapFieldsToModel(model, { Front: 'Q', Back: 'A' }, { front: 'Q', back: 'A' });
     expect(out).not.toHaveProperty('Back');
     expect(out['Question']).toBe('Q');
+  });
+});
+
+describe('inferCardTypeFromModelName', () => {
+  it('模型名含 cloze → cloze', () => {
+    expect(inferCardTypeFromModelName('Cloze')).toBe('cloze');
+    expect(inferCardTypeFromModelName('My Cloze Model')).toBe('cloze');
+  });
+  it('模型名含 image/occlusion → image_occlusion', () => {
+    expect(inferCardTypeFromModelName('Image Occlusion')).toBe('image_occlusion');
+    expect(inferCardTypeFromModelName('Image Occlusion Enhanced')).toBe('image_occlusion');
+  });
+  it('其余（含未选/空）→ basic', () => {
+    expect(inferCardTypeFromModelName('Basic')).toBe('basic');
+    expect(inferCardTypeFromModelName('')).toBe('basic');
+    expect(inferCardTypeFromModelName(null)).toBe('basic');
+    expect(inferCardTypeFromModelName(undefined)).toBe('basic');
+  });
+  it('大小写不敏感', () => {
+    expect(inferCardTypeFromModelName('basic')).toBe('basic');
+    expect(inferCardTypeFromModelName('CLOZE')).toBe('cloze');
   });
 });
 

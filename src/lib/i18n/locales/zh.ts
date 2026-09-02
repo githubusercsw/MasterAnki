@@ -47,6 +47,7 @@ const zh = {
     generated: '已生成 {{count}} 张卡片。',
     noChanges: '无变化——卡片已是最新。',
     updated: '已更新 {{count}} 张卡片（新增 {{added}}，变更 {{changed}}）。',
+    syncedRemovedNotice: '{{count}} 张已入库旧卡在 AnkiDroid 中无法自动删除，请手动清理。',
     updateFailed: '更新失败',
     batchAdded: '已向 AnkiDroid 添加 {{count}} 张卡片。',
     batchAddPartial: '批量入库：成功 {{success}} 张，失败 {{failed}} 张，详见失败清单。',

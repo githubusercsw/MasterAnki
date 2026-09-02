@@ -47,6 +47,8 @@ const en = {
     generated: 'Generated {{count}} cards.',
     noChanges: 'No changes — cards already up to date.',
     updated: 'Updated {{count}} cards ({{added}} new, {{changed}} changed).',
+    syncedRemovedNotice:
+      '{{count}} previously-synced old cards cannot be auto-deleted in AnkiDroid — please remove them manually.',
     updateFailed: 'Update failed',
     batchAdded: 'Added {{count}} cards to AnkiDroid.',
     batchAddPartial: 'Batch add: {{success}} succeeded, {{failed}} failed. See the failure list.',

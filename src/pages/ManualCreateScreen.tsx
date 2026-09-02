@@ -26,6 +26,7 @@ import AnkiDroid, { type AnkiModelInfo } from '../plugins/AnkiDroid';
 import { getSelectedAnkiModel, setSelectedAnkiModel } from '../lib/anki/modelSelection';
 import { useDeckSelector } from '../lib/anki/useDeckSelector';
 import type { CardType } from '../lib/anki/types';
+import { getActiveProviderId } from '../lib/settings/secureStorage';
 
 const ManualCreateScreen: React.FC = () => {
   const history = useHistory();
@@ -107,6 +108,8 @@ const ManualCreateScreen: React.FC = () => {
           isLocked: true,
         },
       });
+      // card_generated 统计需要 Provider 维度（P0-5 修复）
+      const providerId = await getActiveProviderId();
       await Inbox.saveCards({
         entryId,
         cards: [
@@ -117,6 +120,7 @@ const ManualCreateScreen: React.FC = () => {
             tags: tags.split(/[,，\s]+/).filter(Boolean),
           },
         ],
+        providerId,
       });
       setIsSuccess(true);
       setMessage(t('create.created'));

@@ -49,6 +49,8 @@ const ja = {
     generated: '{{count}} 枚のカードを生成しました。',
     noChanges: '変更なし — カードは最新です。',
     updated: '{{count}} 枚のカードを更新（新規 {{added}}、変更 {{changed}}）。',
+    syncedRemovedNotice:
+      '既存の {{count}} 枚は AnkiDroid 側で自動削除できません。手動で削除してください。',
     updateFailed: '更新に失敗',
     batchAdded: '{{count}} 枚のカードを AnkiDroid に追加しました。',
     batchAddPartial: '一括追加: {{success}} 件成功、{{failed}} 件失敗。失敗リストを参照。',
