@@ -23,6 +23,7 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
 | 原生层踩坑记录（Room/API/CI） | `docs/phase35-pitfalls.md` |
 | AnkiDroid 官方 API 文档 | `docs/ankidroid-api.md` |
 | 阶段复盘（P0/P2/P3） | `docs/phase{0,2,3}-review.md` |
+| **遗留问题与逻辑缺陷盘点（必读）** | `docs/remaining-issues.md` |
 | 方案文件（计划书 v2，勿改） | `/home/lingxi/workspace/.lingxi/plans/masteranki重构赋能计划书.md` |
 | 四类插件统一类型 | `src/lib/plugins/types.ts` |
 | LLM 服务单例 | `src/lib/llm/service.ts` |
@@ -85,6 +86,7 @@ MasterAnki = 从零搭建的 Anki 闪卡生成 Android 应用（Capacitor 8 + Re
   - [x] 移除自定义提示词假展开项（后端 PromptService 保留，待接 UI）`{auto:ci}`
   - [x] 测试连接按钮：LLMProvider.testConnection() 区分 missing_key / invalid_key / network / model_error `{auto:ci}`（单测 18）
 - [ ] Phase 4 学习统计仪表盘（StatsEvent 采集已就绪，仪表盘 UI 待做）
+- [x] **遗留问题与逻辑缺陷盘点（2026-09-01，见 docs/remaining-issues.md）**：静态审计全链路，发现 P0×5（生成类型硬编码 basic / 原生 ensureModel 忽略 fields / updateNote 跨模型错位 / 删除不同步孤儿 note / card_generated 缺 providerId）+ P1×6 + P2 清单，Phase 4 前按 P0 排期 `{claimed}`
 
 ## 六、关键约定 / 教训
 - **模型策略**：优先用户所选真实模型（`getSelectedAnkiModel()`），未选则回退内置映射（Basic/Cloze/IO）。
